@@ -1,6 +1,6 @@
 To setup your development environment:
 
-1. Create virtual environment `python -m venv venv`
+1. Create virtual environment `virtualenv venv`
 
 2. Activate your virtual environment with `venv\Scripts\activate`
 
