@@ -1,7 +1,12 @@
 from rest_framework import serializers
-from api.models import User
+from api.models import Doctor, Patient
 
-class UserSerializer(serializers.ModelSerializer):
+class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
-        model=User
-        fields=('UserId','Password')
+        model=Doctor
+        fields=('DoctorId','Password', 'Name', 'Surname', 'Mail')
+
+class PatientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Patient
+        fields=('PatientId','Name','Surname','Age','Sex','Mail','DoctorId')        
