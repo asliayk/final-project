@@ -36,6 +36,8 @@ SECRET_KEY = os.environ['SECRET_KEY'] # Instead of your actual secret key
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 
 # Application definition
