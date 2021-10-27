@@ -22,12 +22,7 @@ def getPatients(request):
         patient_serializer = PatientSerializer(patients,many=True)
         return JsonResponse({"status": {"success": True, "message": "Successfully fetched"},"patients": patient_serializer.data},status=200)     
 
-@csrf_exempt
-def getPatientsofDoctor(request,num):
-    if request.method == 'GET':
-        patients = Patient.objects.filter(DoctorId=num)
-        patient_serializer = PatientSerializer(patients,many=True)
-        return JsonResponse({"status": {"success": True, "message": "Successfully fetched"},"patients": patient_serializer.data},status=200)     
+  
 
 @csrf_exempt
 def addDoctor(request):
@@ -108,7 +103,9 @@ def getDoctorProfile(request,num):
             return JsonResponse({"status": {"success": False,"message": "There is no doctor with that id"}},status=400)
         doctor = Doctor.objects.filter(DoctorId=num).first()
         doctor_serializer = DoctorSerializer(doctor)
-        return JsonResponse({"status": {"success": True, "message": "Successfully fectched"},"doctor": doctor_serializer.data},status=200)       
+        patients = Patient.objects.filter(DoctorId=num)
+        patient_serializer = PatientSerializer(patients,many=True)
+        return JsonResponse({"status": {"success": True, "message": "Successfully fectched"},"doctor": doctor_serializer.data,"patients":patient_serializer.data},status=200)       
 
 @csrf_exempt
 def getPatientProfile(request,num): 
@@ -120,7 +117,7 @@ def getPatientProfile(request,num):
         visits = Visit.objects.filter(PatientId=num)
         visit_serializer = VisitSerializer(visits,many=True)
         return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"patient": patient_serializer.data,"visits":visit_serializer.data},status=200) 
-        #return JsonResponse({"status":"hello"})
+
 
 @csrf_exempt
 def addVisit(request):
@@ -137,7 +134,6 @@ def deleteVisit(request):
     if request.method == 'DELETE': 
         visit_data = JSONParser().parse(request)
         visit = Visit.objects.filter(VisitId=visit_data['VisitId']).first()
-        print(visit.Score)
         visit.delete()
         return JsonResponse({"status": {"success": True,"message": "successfully deleted"}},status=200)         
 

@@ -11,7 +11,6 @@ urlpatterns = [
     path("updatePatient",views.updatePatient),
     path("deleteDoctor",views.deleteDoctor),
     path("deletePatient",views.deletePatient),
-    path("getPatientsofDoctor/<int:num>/",views.getPatientsofDoctor),
     path("doctorProfile/<int:num>/",views.getDoctorProfile),
     path("patientProfile/<int:num>/",views.getPatientProfile),
     path("addVisit",views.addVisit),
