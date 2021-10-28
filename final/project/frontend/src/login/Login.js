@@ -3,12 +3,12 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import { Link, Redirect } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import validate from './Validate'
 import './Login.css'
-//import { postData } from "../common/Requests";
+import { postData } from "../common/Requests";
 import Alert from '@material-ui/lab/Alert';
-//import { serverUrl } from "../common/ServerUrl";
+import { serverUrl } from "../common/ServerUrl";
 
 
 
@@ -44,13 +44,8 @@ function Login() {
     console.log("classes.loginButtonRoot is " + classes.loginButtonRoot)
 
     const [state, setState] = useState({
-        password: '',
-        uid: '',
-    });
-
-    const [val, setVal] = useState({
-        password: { error: false, message: '' },
-        uid: { error: false, message: '' },
+        DoctorId: '',
+        Password: '',
     });
 
     const [logged, setLogged] = useState(false);
@@ -60,59 +55,51 @@ function Login() {
 
     //handlers
     function onChange(event) {
-        var mutableState = state
+        let mutableState = state
+        console.log(mutableState)
         mutableState[event.target.id] = event.target.value
         setState(mutableState)
-        setAlertMessage('')
+        console.log(state+'zzzzzzzz')
     }
 
     function handleOnClick() {
-        const newVal = validate(state, val);
-        setVal(newVal)
-        let valCheck = true;
 
-        for (const key in newVal) {
-            if (newVal.hasOwnProperty(key)) {
-                const element = newVal[key];
-                if (element.error) {
-                    valCheck = false;
-                }
-            }
-        }
-
-        if (valCheck) {
-            const url = serverUrl + 'api/auth/login/';
+            const url = serverUrl + 'api/login';
             const data = {
-                email: state.uid,
-                password: state.password,
+                DoctorId: state.DoctorId,
+                Password: state.Password,
             }
 
-            postData(url, data)
-                .then(handleResponse)
-                .catch((rej) => { setAlertMessage('Some error has occured'); console.log(rej) })
-        }
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        }).then(res => res.json())
+            .then(json => {
+                console.log(json)
+                const success = json.message
+                if (success=="Successfully logged in") {
+                    setLogged(true)
+
+                } else {
+                    alert('There is no user');
+                }
+            })
+            .catch(err => {
+                alert('Some error has occurred')
+                console.log(err)
+            });
+
     }
 
-    function handleResponse(res) {
-        try {
-            const token = res.auth_token;
-            if (token) {
-                console.log(token)
-                localStorage.setItem('token', token);
-                localStorage.setItem('is_vendor', res.is_vendor);
-                setLogged(true);
-            } else {
-                console.log("error message is " + res.error)
-                setAlertMessage(res.error);
-            }
-        } catch (error) {
-            setAlertMessage('Some error has occured');
-        }
-    }
+
 
 
     if (logged) {
-        return <Redirect to='/profile' />
+        return <Redirect to={{
+            pathname: '/profile',
+            state: { id: state.DoctorId }
+        }} />
     }
     return (
         <div className="login">
@@ -129,22 +116,20 @@ function Login() {
                 <form className={classes.loginFormRoot} noValidate autoComplete="off">
                     <div className="username">
                         <TextField
-                            id="uid"
+                            id="DoctorId"
                             label="E-mail"
                             variant="outlined"
-                            error={val.uid.error}
-                            helperText={val.uid.message}
+
                             onChange={onChange} />
                     </div>
                     <div className="password">
                         <TextField
-                            id="password"
+                            id="Password"
                             label="Password"
                             type="password"
                             autoComplete="current-password"
                             variant="outlined"
-                            error={val.password.error}
-                            helperText={val.password.message}
+
                             onChange={onChange} />
                     </div>
                 </form>

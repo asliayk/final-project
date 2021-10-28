@@ -28,6 +28,7 @@ import AddCircleIcon from '@material-ui/icons/AddCircle';
 import Tooltip from "@material-ui/core/Tooltip";
 
 
+
 const useStyles = makeStyles((theme) => ({
     root: {
         width: '100%',
@@ -78,19 +79,18 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-function Profile() {
-
+function Profile(props) {
+    let [loadPage, setLoadPage] = React.useState(false);
     const classes = useStyles();
     let [open, setOpen] = React.useState(false);
-   // let [loadPage, setLoadPage] = React.useState(false);
     let [edit, setEdit] = React.useState(false);
     let [nameChanged, setNameChanged] = React.useState(false);
     let [surnameChanged, setSurnameChanged] = React.useState(false);
     let [emailChanged, setEmailChanged] = React.useState(false);
     let [addressChanged, setAddressChanged] = React.useState(false);
     let [usernameChanged, setUsernameChanged] = React.useState(false);
-    let [isvendor, setIsVendor] = React.useState(true);
-    let [vendorrating, setVR] = React.useState();
+    const  id=props.location.state.id;
+
 
 
     let history = useHistory();
@@ -101,106 +101,16 @@ function Profile() {
     };
 
 
-    let [name, setName] = useState({
+    const [name, setName] = useState({
 
         first_name: '',
         last_name: '',
         email: '',
-        username: '',
-        address_1: '',
-        address_2: '',
-        address_3: '',
-        address_4: '',
-        address_5: '',
-    });
-
-    let [val, setVal] = useState({
-
-        first_name: {error: false, message: ''},
-        last_name: {error: false, message: ''},
-        email: {error: false, message: ''},
-        address_1: {error: false, message: ''},
-        address_2: {error: false, message: ''},
-        address_3: {error: false, message: ''},
-        address_4: {error: false, message: ''},
-        address_5: {error: false, message: ''},
-        username: {error: false, message: ''},
 
     });
 
 
 
-    function handleOnClick() {
-        let data;
-        const token = localStorage.getItem('token')
-
-        let newVal = (validate(name, val));
-        setVal(newVal)
-        let valCheck = true;
-
-        for (const key in newVal) {
-            if (newVal.hasOwnProperty(key)) {
-                const element = newVal[key];
-                if (element.error) {
-                    console.log("error")
-                    valCheck = false;
-                }
-            }
-        }
-        if (valCheck) {
-            let temp_address = name.address_1.replace("/", " ") + "/" + name.address_2.replace("/", " ")  + "/" + name.address_3.replace("/", " ")  + "/" + name.address_4.replace("/", " ")  + "/" + name.address_5.replace("/", " ");
-            if (!usernameChanged && !emailChanged) {
-                data = {
-                    first_name: name.first_name,
-                    last_name: name.last_name,
-                    address: temp_address,
-                }
-            } else if (usernameChanged && !emailChanged) {
-                data = {
-                    username: name.username,
-                    first_name: name.first_name,
-                    last_name: name.last_name,
-                    address: temp_address,
-                }
-            } else if (!usernameChanged && emailChanged) {
-                data = {
-                    email: name.email,
-                    first_name: name.first_name,
-                    last_name: name.last_name,
-                    address: temp_address,
-                }
-            } else {
-                data = {
-                    email: name.email,
-                    username: name.username,
-                    first_name: name.first_name,
-                    last_name: name.last_name,
-                    address: temp_address,
-                }
-            }
-
-            fetch('api/auth/profile_update/', {
-                method: 'POST',
-                headers: {'Authorization': 'Token ' + token, 'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            }).then(res => res.json())
-                .then(json => {
-                    console.log(json)
-                    const success = json.success
-                    if (success) {
-                        alert('Your profile is updated!')
-                        window.location.reload();
-                        setEdit(false);
-                    } else {
-                        alert('User with this username or email already exists');
-                    }
-                })
-                .catch(err => {
-                    alert('Some error has occurred')
-                    console.log(err)
-                });
-        }
-    }
 
     function onChange(event) {
 
@@ -227,76 +137,33 @@ function Profile() {
 
 
     useEffect(() => {
-        const token = localStorage.getItem('token')
-        console.log(token)
+        const docid=props.location.state.id
 
-
-
-        if (token) {
-            fetch( 'api/auth/user_info/', {
-                method: 'POST',
-                headers: {'Authorization': 'Token ' + token, 'Content-Type': 'application/json'}
+            fetch( 'http://lldjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/doctorProfile/'+docid+'/'
+        , {
+                method: 'GET',
+                headers: {'Content-Type': 'application/json'}
             }).then(res => res.json())
                 .then(json => {
+                    console.log( json.doctor.Surname)
 
-                    {
-                        json.address.split('/').length > 2 ?
-                            setName({
-                                first_name: JSON.parse(JSON.stringify(json.first_name)),
-                                last_name: JSON.parse(JSON.stringify(json.last_name)),
-                                email: JSON.parse(JSON.stringify(json.email)),
-                                address_1: JSON.parse(JSON.stringify(json.address.split("/")[0])),
-                                address_2: JSON.parse(JSON.stringify(json.address.split("/")[1])),
-                                address_3: JSON.parse(JSON.stringify(json.address.split("/")[2])),
-                                address_4: JSON.parse(JSON.stringify(json.address.split("/")[3])),
-                                address_5: JSON.parse(JSON.stringify(json.address.split("/")[4])),
-                                username: JSON.parse(JSON.stringify(json.username)),
-                            })
-                            :
-                            setName({
-                                first_name: JSON.parse(JSON.stringify(json.first_name)),
-                                last_name: JSON.parse(JSON.stringify(json.last_name)),
-                                email: JSON.parse(JSON.stringify(json.email)),
-                                address_1: ' ',
-                                address_2: ' ',
-                                address_3: ' ',
-                                address_4: ' ',
-                                address_5: ' ',
-                                username: JSON.parse(JSON.stringify(json.username)),
-                            })
+                    setName({first_name: json.doctor.Name,last_name: json.doctor.Surname,email: json.doctor.Mail})
+                    console.log(name)
 
-                        if(json.is_vendor) {
-                            fetch( 'api/orders/avg-rating-profile-page/', {
-                                method: 'POST',
-                                headers: {'Authorization': 'Token ' + token, 'Content-Type': 'application/json'},
-                            }).then(res => res.json())
-                                .then(json => {
-                                    setVR(json.score.toFixed(1));
-                                })
-                        }
-                    }
-                    setIsVendor(json.is_vendor);
                 }).then(() => {
                 setLoadPage(true)
             }).then(json => {
             })
                 .catch(err => console.log(err));
 
-
-
-        } else {
-            alert('Please login to see profile page')
-            //history.push('/login')
-        }
-
-
-
-
     }, []);
+
+
+
     return (
 
         <div>
-
+            {loadPage ? (
                 <div>
                     <div className="Home">
 
@@ -342,9 +209,7 @@ function Profile() {
                                                 className={classes.root}
                                             >
 
-                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
-                                                          component={Link}
-                                                          to="/vendorproduct">
+                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}>
                                                     <ListItemIcon>
                                                         <ReorderIcon/>
                                                     </ListItemIcon>
@@ -391,8 +256,6 @@ function Profile() {
                                             <Grid item xs={10} sm={5}>
                                                 <TextField
                                                     fullWidth
-                                                    error={val.first_name.error}
-                                                    helperText={val.first_name.message}
                                                     id="first_name"
                                                     label="Name"
                                                     variant="outlined"
@@ -413,8 +276,6 @@ function Profile() {
                                             <Grid item xs={10} sm={5}>
                                                 <TextField
                                                     fullWidth
-                                                    error={val.last_name.error}
-                                                    helperText={val.last_name.message}
                                                     id="last_name"
                                                     label="Surname"
                                                     variant="outlined"
@@ -426,8 +287,6 @@ function Profile() {
                                             <Grid item xs={10} sm={5}>
                                                 <TextField
                                                     fullWidth
-                                                    error={val.username.error}
-                                                    helperText={val.username.message}
                                                     id="username"
                                                     label="Username"
                                                     variant="outlined"
@@ -440,8 +299,6 @@ function Profile() {
                                             <Grid item xs={10} sm={5}>
                                                 <TextField
                                                     fullWidth
-                                                    error={val.email.error}
-                                                    helperText={val.email.message}
                                                     id="email"
                                                     label="E-mail"
                                                     variant="outlined"
@@ -472,8 +329,7 @@ function Profile() {
                                             <Grid item xs={10}>
                                                 <TextField
                                                     required
-                                                    error={val.address_1.error}
-                                                    helperText={val.address_1.message}
+
                                                     id="address_1"
                                                     name="address1"
                                                     label="Address line 1"
@@ -482,7 +338,7 @@ function Profile() {
                                                     autoComplete="shipping address-line1"
                                                     disabled={!edit}
 
-                                                    defaultValue={name.address_1}
+                                                    defaultValue={''}
 
                                                     onChange={onChange}
 
@@ -546,7 +402,7 @@ function Profile() {
                     <div className={classes.ftr}>
                     </div>
                 </div>
-
+            ) : null}
         </div>
     );
 }
