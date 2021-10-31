@@ -14,14 +14,14 @@ export default function Doctor_patients_list() {
 
 
     useEffect(() => {
-        fetch(serverUrl +"/api/getPatientsofDoctor/"+1+'/', {
+        fetch("http://ldjangol.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/doctorProfile/1", {
 
         })
             .then((response) => response.json())
             .then((data) => {
-                setPlist(data);
+                setPlist(data.patients);
 
-               console.log(data)
+               console.log(plist)
 
             }).then(() => {
             setinpage(true)
