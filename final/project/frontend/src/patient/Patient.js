@@ -140,7 +140,7 @@ function Patient(props) {
         const id = props.location.state.id;
         console.log("iddd" + id)
 
-            fetch( 'http://lldjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/patientProfile/'+id
+            fetch( 'http://ldjangol.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/patientProfile/'+id
         , {
                 method: 'GET',
                 headers: {'Content-Type': 'application/json'}
@@ -148,8 +148,9 @@ function Patient(props) {
                 .then(json => {
                   
 
-                    setName({first_name: json.patient.Name,last_name: json.patient.Surname,email: json.patient.Mail})
-                    console.log(name)
+                    setName({first_name: json.patient.Name,last_name: json.patient.Surname,sex: json.patient.Sex, email: json.patient.Mail,
+                        age: json.patient.Age,job: json.patient.Job,maritalStatus: json.patient.MaritalStatus})
+                 
 
                 }).then(() => {
                 setLoadPage(true)
@@ -182,62 +183,8 @@ function Patient(props) {
 
                     <div className={classes.gridroot}>
                         <Grid container>
-                            <Grid item xs={3}>
-                                <Paper className={classes.paper}>
-
-                                        <div>
-                                            <div>
-                                                <IconButton>
-                                                    <Badge>
-                                                        <AccountCircleOutlinedIcon
-                                                            style={{fontSize: "2.5rem", color: "#525b60"}}/>
-                                                    </Badge>
-                                                </IconButton>
-                                                <InputBase
-                                                    style={{
-                                                        color: "#525B60",
-                                                        marginTop: "1.5rem",
-                                                        marginBottom: "1rem"
-                                                    }}
-                                                    defaultValue={name.first_name + ' ' + name.last_name}
-                                                    inputProps={{'aria-label': 'new-arrivals'}}
-                                                    disabled={true}
-                                                />
-
-                                            </div>
-                                            <List
-                                                component="nav"
-                                                className={classes.root}
-                                            >
-
-                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}>
-                                                    <ListItemIcon>
-                                                        <ReorderIcon/>
-                                                    </ListItemIcon>
-                                                    <ListItemText primary="My Patients"/>
-                                                </ListItem>
-                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
-                                                          component={Link}
-                                                          to="/add-product">
-                                                    <ListItemIcon>
-                                                        <AddCircleIcon/>
-                                                    </ListItemIcon>
-                                                    <ListItemText primary="Add Patient"/>
-                                                </ListItem>
-                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}} component={Link} to="/profile/changepassword">
-                                                    <ListItemIcon>
-                                                        <LockIcon/>
-                                                    </ListItemIcon>
-                                                    <ListItemText primary="Change Password"/>
-                                                </ListItem>
-
-                                            </List>
-                                        </div>
-
-
-                                </Paper>
-                            </Grid>
-                            <Grid item xs={7} style={{marginLeft: "2rem"}}>
+                           
+                            <Grid item xs={4} style={{marginLeft: "2rem"}}>
                                 <Paper className={classes.paper2}>
                                     <div className={classes.grid2}>
                                         <InputBase
@@ -245,14 +192,14 @@ function Patient(props) {
                                                 color: "black",
                                                 fontSize: 30,
                                                 fontWeight: "500",
-                                                marginLeft: "12rem",
+                                                marginLeft: "2rem",
                                                 marginBottom: "2rem"
                                             }}
-                                            defaultValue="My Account"
+                                            defaultValue="Demographic Info"
                                             disabled={true}
                                         />
                                     </div>
-                                    <div style={{marginLeft: "6rem"}}>
+                                    <div style={{marginLeft: "3rem"}}>
                                         <Grid container spacing={3}>
                                             <Grid item xs={10} sm={5}>
                                                 <TextField
@@ -288,10 +235,10 @@ function Patient(props) {
                                             <Grid item xs={10} sm={5}>
                                                 <TextField
                                                     fullWidth
-                                                    id="username"
-                                                    label="Username"
+                                                    id="age"
+                                                    label="Age"
                                                     variant="outlined"
-                                                    defaultValue={name.username}
+                                                    defaultValue={name.age}
 
                                                     disabled={!edit}
                                                     onChange={onChange}
@@ -300,46 +247,46 @@ function Patient(props) {
                                             <Grid item xs={10} sm={5}>
                                                 <TextField
                                                     fullWidth
-                                                    id="email"
-                                                    label="E-mail"
+                                                    id="sex"
+                                                    label="Sex"
                                                     variant="outlined"
-                                                    defaultValue={name.email}
+                                                    defaultValue={name.sex}
                                                     disabled={true}
                                                     onChange={onChange}
                                                 />
                                             </Grid>
-                                            {/*<div>
-                          <TextField
-                              className={classes.txtfield2}
-                              error={val.address.error}
-                              helperText={val.address.message}
-                              id="address"
-                              label="Address"
-                              variant="outlined"
-                              defaultValue={JSON.parse(JSON.stringify(name.address)) !== '' ?
-                                  (JSON.parse(JSON.stringify(name.address))) : (' ')
-                              }
-                              disabled={!edit}
-                              multiline={true}
-                              onChange={onChange}
-                          />
-                        </div>*/}
+                                      
+                                            <Grid item xs={10}>
+                                                <TextField
+                                                    required
 
+                                                    id="job"
+                                                    name="job"
+                                                    label="Job"
+                                                    fullWidth
+                                                    variant="outlined"
+                                                    disabled={!edit}
 
+                                                    defaultValue={name.job}
+
+                                                    onChange={onChange}
+
+                                                />
+                                            </Grid>
 
                                             <Grid item xs={10}>
                                                 <TextField
                                                     required
 
-                                                    id="address_1"
-                                                    name="address1"
-                                                    label="Address line 1"
+                                                    id="maritalStatus"
+                                                    name="maritalStatus"
+                                                    label="Marital Status"
                                                     fullWidth
                                                     variant="outlined"
                                                     autoComplete="shipping address-line1"
                                                     disabled={!edit}
 
-                                                    defaultValue={''}
+                                                    defaultValue={name.maritalStatus}
 
                                                     onChange={onChange}
 
@@ -348,53 +295,7 @@ function Patient(props) {
 
                                         </Grid>
 
-                                        <div style={{marginTop: '2rem'}}>
-
-
-                                            {edit ? (
-                                                    <div style={{display: 'flex', flexDirection: 'row'}}>
-                                                        <Button
-                                                            style={{
-                                                                width: "20rem",
-
-                                                                marginLeft: "1rem",
-                                                                marginRight: "1rem",
-
-                                                                marginTop: "1rem",
-                                                                backgroundColor: "#0B3954",
-                                                            }}
-                                                            variant="contained" color="primary"
-                                                            onClick={handleOnClick}
-                                                        >
-                                                            Save
-                                                        </Button>
-                                                        <Button
-                                                            style={{
-                                                                width: "20rem",
-                                                                marginLeft: "1rem",
-                                                                marginRight: "8rem",
-                                                                marginTop: "1rem",
-                                                                backgroundColor: "#a71325",
-                                                            }}
-                                                            variant="contained" color="primary"
-                                                            onClick={() => setEdit(false)}
-                                                        >Cancel
-                                                        </Button></div>
-                                                ) :
-                                                <Button
-                                                    style={{
-                                                        width: "20rem",
-                                                        marginLeft: "10rem",
-                                                        marginRight: "8rem",
-                                                        backgroundColor: "#0B3954",
-                                                    }}
-                                                    variant="contained" color="primary"
-                                                    onClick={() => setEdit(true)}
-                                                >
-                                                    Edit
-                                                </Button>
-                                            }
-                                        </div>
+                                        
                                     </div>
                                 </Paper>
                             </Grid>
