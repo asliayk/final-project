@@ -208,13 +208,17 @@ function Profile(props) {
                                                 component="nav"
                                                 className={classes.root}
                                             >
+                                                <Link
+                                                    to={{pathname: "/doctorpatients", state: {id: props.location.state.id}}}
 
+                                                >
                                                 <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}>
                                                     <ListItemIcon>
                                                         <ReorderIcon/>
                                                     </ListItemIcon>
                                                     <ListItemText primary="My Patients"/>
                                                 </ListItem>
+                                                </Link>
                                                 <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
                                                           component={Link}
                                                           to="/add-product">

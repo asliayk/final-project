@@ -8,13 +8,13 @@ import Doctor_patients_list_item from "./Doctor_patients_list_item";
 
 
 
-export default function Doctor_patients_list() {
+export default function Doctor_patients_list(props) {
     const [plist, setPlist] = useState([]);
     const[inpage,setinpage]= useState('false');
-
+    const docid=props.location.state.id;
 
     useEffect(() => {
-        fetch("http://ldjangol.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/doctorProfile/1", {
+        fetch("http://ldjangol.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/doctorProfile/"+docid+'/', {
 
         })
             .then((response) => response.json())

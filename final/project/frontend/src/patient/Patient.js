@@ -26,6 +26,8 @@ import Button from "@material-ui/core/Button";
 import LockIcon from '@material-ui/icons/Lock';
 import AddCircleIcon from '@material-ui/icons/AddCircle';
 import Tooltip from "@material-ui/core/Tooltip";
+import CheckboxListSecondary from "../components/scrolllist";
+import ScrollList from "../components/scrolllist";
 
 
 
@@ -43,13 +45,19 @@ const useStyles = makeStyles((theme) => ({
         marginLeft: "2rem",
     },
     paper: {
+        marginBottom:'2rem',
+        height: "10rem",
+        padding: theme.spacing(2),
+        color: theme.palette.text.secondary,
+    },
+    paper3: {
+        height: "39rem",
 
-        height: "35rem",
         padding: theme.spacing(2),
         color: theme.palette.text.secondary,
     },
     paper2: {
-        height: "35rem",
+        height: "27rem",
 
         padding: theme.spacing(2),
         color: theme.palette.text.secondary,
@@ -60,6 +68,10 @@ const useStyles = makeStyles((theme) => ({
     grid2: {
         marginBottom: "1.5rem",
         marginLeft: "6rem",
+    },
+    grid: {
+        marginBottom: "1.5rem",
+        marginLeft: "1rem",
     },
     ftr: {
         marginTop: "2rem",
@@ -89,6 +101,9 @@ function Patient(props) {
     let [emailChanged, setEmailChanged] = React.useState(false);
     let [addressChanged, setAddressChanged] = React.useState(false);
     let [usernameChanged, setUsernameChanged] = React.useState(false);
+    let [prognosis, setprognosis] = React.useState([]);
+    let [lastdiagnosis, setlastdiagnosis] = React.useState();
+    let [lastdiagnosisscore, setlastdiagnosisscore] = React.useState();
 
 
 
@@ -146,7 +161,9 @@ function Patient(props) {
                 headers: {'Content-Type': 'application/json'}
             }).then(res => res.json())
                 .then(json => {
-                  
+                    setprognosis(json.visits)
+                    setlastdiagnosis(json.patient.LastDiagnosis)
+                    setlastdiagnosisscore(json.patient.LastScore)
 
                     setName({first_name: json.patient.Name,last_name: json.patient.Surname,sex: json.patient.Sex, email: json.patient.Mail,
                         age: json.patient.Age,job: json.patient.Job,maritalStatus: json.patient.MaritalStatus})
@@ -184,15 +201,14 @@ function Patient(props) {
                     <div className={classes.gridroot}>
                         <Grid container>
                            
-                            <Grid item xs={4} style={{marginLeft: "2rem"}}>
-                                <Paper className={classes.paper2}>
+                            <Grid item xs={11} sm={4} style={{marginLeft: "2rem"}}>
+                                <Paper className={classes.paper3}>
                                     <div className={classes.grid2}>
                                         <InputBase
                                             style={{
                                                 color: "black",
                                                 fontSize: 30,
                                                 fontWeight: "500",
-                                                marginLeft: "2rem",
                                                 marginBottom: "2rem"
                                             }}
                                             defaultValue="Demographic Info"
@@ -297,9 +313,50 @@ function Patient(props) {
 
                                         
                                     </div>
+
+                                </Paper>
+
+                            </Grid>
+                            <Grid item xs={11} sm={7} style={{marginLeft: "2rem"}}>
+
+                                <Paper className={classes.paper}>
+                                    <div className={classes.grid}>
+                                        <InputBase
+                                            style={{
+                                                color: "black",
+                                                fontSize: 30,
+                                                fontWeight: "500",
+
+                                            }}
+                                            defaultValue="Last Diagnosis"
+
+                                        />
+                                    </div>
+                                    <div style={{color: "black",marginLeft: "1rem",fontSize: 20}}>
+                                    {lastdiagnosis+"   "+lastdiagnosisscore}
+                                    </div>
+                                </Paper>
+                                <Paper className={classes.paper2}>
+                                    <div className={classes.grid}>
+                                        <InputBase
+                                            style={{
+                                                color: "black",
+                                                fontSize: 30,
+                                                fontWeight: "500",
+
+                                            }}
+                                            defaultValue="Prognosis"
+
+                                        />
+                                    </div>
+                                <ScrollList listof={prognosis} />
                                 </Paper>
                             </Grid>
+
                         </Grid>
+
+
+
                     </div>
                     <div className={classes.ftr}>
                     </div>
