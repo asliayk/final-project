@@ -18,4 +18,4 @@ To setup your development environment:
 
 9. Install node modules with `npm install`
 
-10. Run with `npm run dev`
+10. Run with `npm start`
