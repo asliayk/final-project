@@ -3,11 +3,26 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from django.http.response import JsonResponse
 
-from api.models import Doctor, Patient, Visit
-from api.serializers import DoctorSerializer, PatientSerializer, VisitSerializer
+from api.models import Doctor, Patient, Visit, Visits, Statistics
+from api.serializers import DoctorSerializer, PatientSerializer, VisitSerializer, VisitsSerializer, StatisticsSerializer
 
 
 # Create your views here.
+@csrf_exempt
+def getVisitss(request):
+    if request.method == 'GET':
+        visitss = Visits.objects.all()
+        visits_serializer = VisitsSerializer(visitss,many=True)
+        return JsonResponse({"status": {"success": True, "message": "Successfully fetched"},"visits": visits_serializer.data},status=200)
+
+@csrf_exempt
+def getStatistics(request):
+    if request.method == 'GET':
+        statistics = Statistics.objects.all()
+        statistics_serializer = StatisticsSerializer(statistics,many=True)
+        return JsonResponse({"status": {"success": True, "message": "Successfully fetched"},"statistics": statistics_serializer.data},status=200)         
+
+
 @csrf_exempt
 def getDoctors(request):
     if request.method == 'GET':
@@ -103,19 +118,19 @@ def getDoctorProfile(request,num):
             return JsonResponse({"status": {"success": False,"message": "There is no doctor with that id"}},status=400)
         doctor = Doctor.objects.filter(DoctorId=num).first()
         doctor_serializer = DoctorSerializer(doctor)
-        patients = Patient.objects.filter(DoctorId=num)
+        patients = Patient.objects.all()
         patient_serializer = PatientSerializer(patients,many=True)
         return JsonResponse({"status": {"success": True, "message": "Successfully fectched"},"doctor": doctor_serializer.data,"patients":patient_serializer.data},status=200)       
 
 @csrf_exempt
-def getPatientProfile(request,num): 
+def getPatientProfile(request,id): 
     if request.method == 'GET': 
-        if Patient.objects.filter(PatientId=num).first() is None:
+        if Patient.objects.filter(PTID=id).first() is None:
             return JsonResponse({"status": {"success": False,"message": "There is no patient with that id"}},status=400)
-        patient = Patient.objects.filter(PatientId=num).first()
+        patient = Patient.objects.filter(PTID=id).first()
         patient_serializer = PatientSerializer(patient)
-        visits = Visit.objects.filter(PatientId=num)
-        visit_serializer = VisitSerializer(visits,many=True)
+        visits = Visits.objects.filter(PTID=id)
+        visit_serializer = VisitsSerializer(visits,many=True)
         return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"patient": patient_serializer.data,"visits":visit_serializer.data},status=200) 
 
 
