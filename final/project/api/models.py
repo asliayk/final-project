@@ -89,8 +89,18 @@ class Visits(models.Model):
 class Statistics(models.Model):
     AvgAge = models.CharField(max_length=10)
     FemalePercentage = models.CharField(max_length=10)
-    MarriedPercentage = models.CharField(max_length=10)
-    WhitePercentage = models.CharField(max_length=10)    
+    MarriedPercentage_m = models.CharField(max_length=10)
+    DivorcedPercentage_m = models.CharField(max_length=10)
+    NeverMarriedPercentage_m = models.CharField(max_length=10)
+    UnknownPercentage_m = models.CharField(max_length=10)
+    WidowedPercentage_m = models.CharField(max_length=10)
+    WhitePercentage_race = models.CharField(max_length=10)   
+    AsianPercentage_race = models.CharField(max_length=10)
+    BlackPercentage_race = models.CharField(max_length=10)
+    UnknownPercentage_race = models.CharField(max_length=10) 
+    HawaiianPercentage_race = models.CharField(max_length=10) 
+    AmIndianAlaskanPercentage_race = models.CharField(max_length=10) 
+    MoreThanOnePercentage_race = models.CharField(max_length=10) 
 
 
 

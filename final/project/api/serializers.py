@@ -34,6 +34,8 @@ class VisitsSerializer(serializers.ModelSerializer):
 class StatisticsSerializer(serializers.ModelSerializer):
     class Meta:
         model=Statistics
-        fields=('AvgAge','FemalePercentage','MarriedPercentage','WhitePercentage')            
+        fields=('AvgAge','FemalePercentage','MarriedPercentage_m','DivorcedPercentage_m','NeverMarriedPercentage_m',
+        'UnknownPercentage_m','WidowedPercentage_m','WhitePercentage_race','AsianPercentage_race','BlackPercentage_race',
+        'UnknownPercentage_race','HawaiianPercentage_race','AmIndianAlaskanPercentage_race','MoreThanOnePercentage_race')            
 
             
