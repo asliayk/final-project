@@ -107,9 +107,6 @@ function Patient(props) {
 
 
 
-
-    let history = useHistory();
-
     const handleClick = () => {
         setOpen(!open);
 
@@ -153,7 +150,6 @@ function Patient(props) {
 
     useEffect(() => {
         const id = props.location.state.id;
-        console.log("iddd" + id)
 
             fetch( 'http://ldjangol.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/patientProfile/'+id
         , {
@@ -162,11 +158,11 @@ function Patient(props) {
             }).then(res => res.json())
                 .then(json => {
                     setprognosis(json.visits)
-                    setlastdiagnosis(json.patient.LastDiagnosis)
-                    setlastdiagnosisscore(json.patient.LastScore)
+                    setlastdiagnosis(json.patient.DX)
+                    //setlastdiagnosisscore(json.patient.LastScore)
 
-                    setName({first_name: json.patient.Name,last_name: json.patient.Surname,sex: json.patient.Sex, email: json.patient.Mail,
-                        age: json.patient.Age,job: json.patient.Job,maritalStatus: json.patient.MaritalStatus})
+                    setName({first_name: json.patient.PTID,last_name: json.patient.PTID,sex: json.patient.PTGENDER,
+                        age: json.patient.AGE,maritalStatus: json.patient.PTMARRY, race: json.patient.PTRACCAT})
                  
 
                 }).then(() => {
@@ -274,16 +270,16 @@ function Patient(props) {
                                       
                                             <Grid item xs={10}>
                                                 <TextField
-                                                    required
+                                                    
 
-                                                    id="job"
-                                                    name="job"
-                                                    label="Job"
+                                                    id="race"
+                                                    name="race"
+                                                    label="race"
                                                     fullWidth
                                                     variant="outlined"
                                                     disabled={!edit}
 
-                                                    defaultValue={name.job}
+                                                    defaultValue={name.race}
 
                                                     onChange={onChange}
 
@@ -292,7 +288,7 @@ function Patient(props) {
 
                                             <Grid item xs={10}>
                                                 <TextField
-                                                    required
+                                             
 
                                                     id="maritalStatus"
                                                     name="maritalStatus"

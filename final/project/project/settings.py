@@ -33,7 +33,7 @@ SECRET_KEY = os.environ['SECRET_KEY'] # Instead of your actual secret key
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 CORS_ALLOW_ALL_ORIGINS = True

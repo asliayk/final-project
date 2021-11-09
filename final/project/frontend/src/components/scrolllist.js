@@ -47,7 +47,7 @@ export const ScrollList  = ({listof}) => {
 
                     <ListItem  key={value} button>
 
-                        <ListItemText  classes={{primary:classes.listItemText}} id={labelId} primary={`${value.Date.split("T")[0]+" "+value.Diagnosis+" "+value.Score}`}/>
+                        <ListItemText  classes={{primary:classes.listItemText}} id={labelId} primary={`${value.EXAMDATE+" "+value.DX}`}/>
 
                     </ListItem>
 

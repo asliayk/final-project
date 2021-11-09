@@ -48,12 +48,10 @@ export default function Doctor_patients_list_item(props) {
                     xs={6}
                 >
                     <Link 
-            to={{pathname: "/patient", state: {id: props.patient.PatientId}}} 
-
-            
+            to={{pathname: "/patient", state: {id: props.patient.PTID}}}
         >
                     <Typography gutterBottom variant="h4">
-                        {props.patient.Name + " " + props.patient.Surname + ": " + props.patient.LastDiagnosis}
+                        {props.patient.PTID + " " + props.patient.PTID + ": "}
                     </Typography>
                     </Link>
                     <Divider variant="middle" />
