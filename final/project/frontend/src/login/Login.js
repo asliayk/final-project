@@ -77,8 +77,8 @@ function Login() {
         }).then(res => res.json())
             .then(json => {
                 console.log(json)
-                const success = json.message
-                if (success=="Successfully logged in") {
+                const success = json.status.success
+                if (success) {
                     setLogged(true)
 
                 } else {

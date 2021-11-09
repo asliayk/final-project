@@ -139,7 +139,7 @@ function Profile(props) {
     useEffect(() => {
         const docid=props.location.state.id
 
-            fetch( 'http://lldjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/doctorProfile/'+docid+'/'
+            fetch( 'http://ldjangol.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/doctorProfile/'+docid+'/'
         , {
                 method: 'GET',
                 headers: {'Content-Type': 'application/json'}
