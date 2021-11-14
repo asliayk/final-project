@@ -3,8 +3,8 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from django.http.response import JsonResponse
 
-from api.models import Doctor, Patient, Visit, Visits, Statistics
-from api.serializers import DoctorSerializer, PatientSerializer, VisitSerializer, VisitsSerializer, StatisticsSerializer
+from api.models import Doctor, Patient, Visits, Statistics
+from api.serializers import DoctorSerializer, PatientSerializer, VisitsSerializer, StatisticsSerializer
 
 
 # Create your views here.
@@ -134,30 +134,7 @@ def getPatientProfile(request,id):
         return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"patient": patient_serializer.data,"visits":visit_serializer.data},status=200) 
 
 
-@csrf_exempt
-def addVisit(request):
-    if request.method == 'POST':
-        visit_data = JSONParser().parse(request)
-        visit_serializer = VisitSerializer(data=visit_data)
-        if visit_serializer.is_valid():
-            visit_serializer.save()
-            return JsonResponse({"status": {"success": True, "message": "Visit is added successfully"}},status=200)  
-        return JsonResponse({"status": {"success": False, "message": "Visit couldn't be added"}},status=400)     
-
-@csrf_exempt
-def deleteVisit(request):   
-    if request.method == 'DELETE': 
-        visit_data = JSONParser().parse(request)
-        visit = Visit.objects.filter(VisitId=visit_data['VisitId']).first()
-        visit.delete()
-        return JsonResponse({"status": {"success": True,"message": "successfully deleted"}},status=200)         
-
-@csrf_exempt
-def getVisits(request):
-    if request.method == 'GET':
-        visits = Visit.objects.all()
-        visit_serializer = VisitSerializer(visits,many=True)
-        return JsonResponse({"status": {"success": True, "message": "Successfully fetched"},"visits": visit_serializer.data},status=200)            
+          
 
         
 

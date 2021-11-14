@@ -21,11 +21,6 @@ class Patient(models.Model):
     DX = models.CharField(max_length=30)
     EXAMDATE = models.CharField(max_length=50)
 
-class Visit(models.Model):
-    VisitId = models.CharField(primary_key=True, max_length=20)
-    Diagnosis = models.CharField(max_length=30)
-    Score = models.IntegerField()  
-    Date = models.DateTimeField(auto_now_add=True)
 
 class Visits(models.Model):    
     RID = models.CharField(max_length=30)
@@ -46,6 +41,7 @@ class Visits(models.Model):
     PTRACCAT =  models.CharField(max_length=30)
     PTMARRY =  models.CharField(max_length=30)
     APOE4 = models.CharField(max_length=30)
+    FDG = models.CharField(max_length=30)
     CDRSB = models.CharField(max_length=30)
     ADAS11 =  models.CharField(max_length=30)
     ADAS13 =  models.CharField(max_length=30)

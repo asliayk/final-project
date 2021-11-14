@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import Doctor, Patient, Visit, Visits, Statistics
+from api.models import Doctor, Patient, Visits, Statistics
 
 class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,10 +11,6 @@ class PatientSerializer(serializers.ModelSerializer):
         model=Patient
         fields=('PTID','AGE','PTGENDER','PTEDUCAT','PTETHCAT','PTRACCAT','PTMARRY','APOE4','DX_bl','DX','EXAMDATE')     
 
-class VisitSerializer(serializers.ModelSerializer):
-    class Meta:
-        model=Visit
-        fields=('VisitId','Diagnosis','Score','Date','PatientId')    
 
 class VisitsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,7 +18,7 @@ class VisitsSerializer(serializers.ModelSerializer):
         fields=('RID','PTID','VISCODE','SITE','D1',
         'D2','COLPROT','ORIGPROT','EXAMDATE','DX_bl',
         'DXCHANGE','AGE','PTGENDER','PTEDUCAT','PTETHCAT',
-        'PTRACCAT','PTMARRY','APOE4','CDRSB','ADAS11',
+        'PTRACCAT','PTMARRY','APOE4','FDG','CDRSB','ADAS11',
         'ADAS13','MMSE','RAVLT_immediate','RAVLT_learning','RAVLT_forgetting',
         'RAVLT_perc_forgetting','FAQ','Ventricles','Hippocampus','WholeBrain',
         'Entorhinal','Fusiform','MidTemp','ICV','DX',
