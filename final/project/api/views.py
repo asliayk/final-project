@@ -5,9 +5,165 @@ from django.http.response import JsonResponse
 
 from api.models import Doctor, Patient, Visits, Statistics
 from api.serializers import DoctorSerializer, PatientSerializer, VisitsSerializer, StatisticsSerializer
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from sklearn.manifold import TSNE
+
+from sklearn.metrics import roc_auc_score, average_precision_score, plot_roc_curve
+from sklearn import metrics
+from sklearn.metrics import confusion_matrix
+
+from copy import deepcopy as dc
+from sklearn.decomposition import PCA
+import math
+import torch
+from classifier import Classifier
+
+
+from torch import nn
 
 
 # Create your views here.
+def get_onehot_columns(df, cat_col_list):
+    for i in cat_col_list:
+        df[i] = df[i].astype(str)
+    oh_df = pd.DataFrame()
+    for i in cat_col_list:
+        temp = pd.get_dummies(df[i])
+        temp.columns = [str(col) + '_{}'.format(i) for col in temp.columns]
+        oh_df = pd.concat([oh_df, temp], axis=1)
+    df = df.drop(cat_col_list, axis=1)
+    df = pd.concat([df, oh_df], axis=1)
+    return df
+
+def do_padding(matrices, value, maxlen=None):
+    if maxlen is None:
+        maxlen = max(len(m) for m in matrices)
+    ret = [np.pad(m, [(0, maxlen - len(m)), (0, 0)], 'constant', constant_values=(value, value))[:, None, :] for m in matrices]
+    return np.concatenate(ret, axis=1)
+
+def prepare_model_data_2d(dat, test_ratio, pad_value, num_column_list, target_col="DX", selected_labels=None):
+    id_column = 'PTID'
+    date_column = 'VISCODE'
+    #dat = dat[dat[label_column].isin(selected_labels)]
+ 
+    #scaler_x = StandardScaler()
+    #scaler_x.fit(dat[num_column_list])
+
+    #dat[num_column_list] = scaler_x.transform(dat[num_column_list])
+ 
+    label_num = dat[target_col].nunique()
+    dat = pd.concat([dat.drop(target_col, axis=1), pd.get_dummies(dat[target_col])], axis=1)
+ 
+    patients = np.array(dat.sort_values([id_column, date_column])[id_column].tolist())
+    values = np.array(dat.sort_values([id_column, date_column]).iloc[:, 2:-(label_num)].values)
+    labels = np.array(dat.sort_values([id_column, date_column]).iloc[:, -(label_num):].values)
+
+    idx = int(len(values) * (1 - test_ratio))
+
+    X_train = np.asarray(values[:idx, :]).astype('float32')
+    y_train = np.asarray(labels[:idx, :]).astype('float32')
+    pt_train = patients[:idx]
+    X_test = np.asarray(values[idx:, :]).astype('float32')
+    y_test = np.asarray(labels[idx:, :]).astype('float32')
+    pt_test = patients[idx:]
+    #return X_train, y_train, pt_train, X_test, y_test, pt_test
+    return values
+
+def data_preprocessing(data, columns, features_list, selected_months, is_2d, interpolation):
+    id_column, date_column, label_column = columns
+    df = data[features_list + [label_column]]
+ 
+    months_list = [0] + [int(x[-2:]) for x in df[date_column].unique() if x != 'bl']
+    time_dict = dict(zip(df[date_column].unique(), months_list))
+    #num_column_list = sorted([col for col in df.select_dtypes(include=["int", "int64", "float"]).columns if
+    #                          col not in [id_column, date_column, label_column]])
+    #cat_column_list = sorted([col for col in df.select_dtypes(include=['category', 'object']).columns if
+    #                          col not in [id_column, date_column, label_column]])
+    num_column_list = ['ADAS11', 'ADAS11_bl', 'ADAS13', 'ADAS13_bl', 'AGE', 'APOE4', 'CDRSB', 'CDRSB_bl', 'Entorhinal', 'Entorhinal_bl', 'FAQ', 'FAQ_bl', 'FDG', 'FDG_bl', 'Fusiform', 'Fusiform_bl', 'Hippocampus', 'Hippocampus_bl', 'ICV', 'ICV_bl', 'MMSE', 'MMSE_bl', 'MidTemp', 'MidTemp_bl', 'RAVLT_immediate', 'RAVLT_immediate_bl', 'Ventricles', 'Ventricles_bl', 'WholeBrain', 'WholeBrain_bl']
+  
+    
+    cat_column_list = []
+    df = get_onehot_columns(df, cat_column_list)
+    df[date_column] = df[date_column].apply(lambda x: time_dict[x])
+
+    if is_2d:
+        valid_ids = df.groupby(id_column).nunique().query("{}>3".format(date_column)).index.tolist()
+    
+    else:
+        df = df[df[date_column].isin(selected_months)]
+        valid_ids = df.groupby(id_column).nunique().query("{}=={}".format(date_column, len(selected_months))).index.tolist()
+    #df = df[df[id_column].isin(valid_ids)]
+
+
+    df = df.sort_values([id_column, date_column])
+  
+    if interpolation:
+        df[[id_column, date_column] + num_column_list] = df[[id_column, date_column] + num_column_list].groupby(
+            id_column).apply(lambda x: x.interpolate())
+     
+    df = df.groupby(id_column).apply(lambda x: x.fillna(method="ffill"))  # .fillna(method="bfill"))
+    # df = df.fillna(df.mean())
+   
+    for col in num_column_list:
+        df[col] = df[col].fillna(df.groupby(label_column)[col].transform('mean'))
+     
+    mapping = {k: v for v, k in enumerate(sorted(df[id_column].unique()))}
+    df[id_column] = df[id_column].map(mapping)
+    # diag = df.groupby(id_column).last().reset_index().query("DX in {}".format(['NL', 'Dementia', 'MCI']))[id_column].tolist()
+    # df =  df[df[id_column].isin(diag)]
+
+    #df = df.dropna()
+    return df, num_column_list, cat_column_list, mapping
+
+@csrf_exempt
+def getCategory(request):
+    if request.method == 'POST':
+        visit_data = JSONParser().parse(request)
+        visit = Visits.objects.filter(RID=visit_data['RID'],PTID=visit_data['PTID'],VISCODE=visit_data['VISCODE']).first()
+        visits_serializer = VisitsSerializer(visit)
+        df = pd.DataFrame(visits_serializer.data, index=[0])
+        id_column = 'PTID'
+        date_column = 'VISCODE'
+        label_column = 'DX'
+        pad_value = 10**5
+        selected_months = [0, 6, 12, 18, 24]
+
+        features = ['RAVLT_immediate','ADAS11','ADAS13','MMSE',
+        'Hippocampus',
+        'WholeBrain',
+        'FDG',
+        'MidTemp',
+        'Entorhinal',
+        'Fusiform','ICV',
+        'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]
+
+        features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
+
+        features_list = sorted(features + features_bl)
+        cols = [id_column, date_column] + features_list
+        data_2d, num_column_list, cat_column_list, mapping = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=False)
+
+        values = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=["Dementia","MCI"])
+
+        values = values.astype(float)
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+        model = torch.load('api/binary_classifier_model.pth').to(device)
+
+        with torch.no_grad():
+         values = torch.from_numpy(values).float()
+         pred = model(values)
+
+
+        return JsonResponse({"status": {"success": True, "message": "Successfully fetched"}, "category": str(pred.argmax(1).numpy()[0])},status=200)
+    
+
+
 @csrf_exempt
 def getVisitss(request):
     if request.method == 'GET':

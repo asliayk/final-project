@@ -81,6 +81,7 @@ class Visits(models.Model):
     Month =  models.CharField(max_length=30)
     M = models.CharField(max_length=30)
     update_stamp =  models.CharField(max_length=50)
+    FDG_bl =  models.CharField(max_length=30)
 
 class Statistics(models.Model):
     AvgAge = models.CharField(max_length=10)

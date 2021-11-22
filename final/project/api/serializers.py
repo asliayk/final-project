@@ -25,7 +25,7 @@ class VisitsSerializer(serializers.ModelSerializer):
         'EXAMDATE_bl','CDRSB_bl','ADAS11_bl','ADAS13_bl','MMSE_bl',
         'RAVLT_immediate_bl','RAVLT_learning_bl','RAVLT_forgetting_bl','RAVLT_perc_forgetting_bl','FAQ_bl',
         'Ventricles_bl','Hippocampus_bl','WholeBrain_bl','Entorhinal_bl','Fusiform_bl',
-        'MidTemp_bl','ICV_bl','Years_bl','Month_bl','Month','M','update_stamp')      
+        'MidTemp_bl','ICV_bl','Years_bl','Month_bl','Month','M','update_stamp','FDG_bl')      
 
 class StatisticsSerializer(serializers.ModelSerializer):
     class Meta:
