@@ -64,7 +64,7 @@ function Login() {
 
     function handleOnClick() {
 
-            const url = serverUrl + 'api/login';
+            const url = "http://ldjangol.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/login";
             const data = {
                 DoctorId: state.DoctorId,
                 Password: state.Password,
