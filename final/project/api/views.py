@@ -275,11 +275,15 @@ def getPatientProfile(request,id):
         device = "cuda" if torch.cuda.is_available() else "cpu"
     
         model = torch.load('api/binary_classifier_model.pth').to(device)
-
+        clist = []
         with torch.no_grad():
          values = torch.from_numpy(values).float()
          pred = model(values)
-         print(str(pred.argmax(1).numpy()))
+        
+        for cat in pred.argmax(1).numpy():
+            clist.append(cat)
+        for cat,visit in zip(clist,visit_serializer.data):
+            visit.update({"category":str(cat)})    
 
 
         return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"patient": patient_serializer.data,"visits":visit_serializer.data, "categories":str(pred.argmax(1).numpy())},status=200) 
