@@ -88,6 +88,7 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
     
     cat_column_list = []
     df = get_onehot_columns(df, cat_column_list)
+   
     df[date_column] = df[date_column].apply(lambda x: time_dict[x])
 
     if is_2d:
@@ -100,69 +101,27 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
 
 
     df = df.sort_values([id_column, date_column])
-  
+   
     if interpolation:
         df[[id_column, date_column] + num_column_list] = df[[id_column, date_column] + num_column_list].groupby(
             id_column).apply(lambda x: x.interpolate())
      
     df = df.groupby(id_column).apply(lambda x: x.fillna(method="ffill"))  # .fillna(method="bfill"))
     # df = df.fillna(df.mean())
+
    
     for col in num_column_list:
         df[col] = df[col].fillna(df.groupby(label_column)[col].transform('mean'))
-     
+
+
     mapping = {k: v for v, k in enumerate(sorted(df[id_column].unique()))}
     df[id_column] = df[id_column].map(mapping)
     # diag = df.groupby(id_column).last().reset_index().query("DX in {}".format(['NL', 'Dementia', 'MCI']))[id_column].tolist()
     # df =  df[df[id_column].isin(diag)]
 
     #df = df.dropna()
+  
     return df, num_column_list, cat_column_list, mapping
-
-@csrf_exempt
-def getCategory(request):
-    if request.method == 'POST':
-        visit_data = JSONParser().parse(request)
-        visit = Visits.objects.filter(RID=visit_data['RID'],PTID=visit_data['PTID'],VISCODE=visit_data['VISCODE']).first()
-        visits_serializer = VisitsSerializer(visit)
-        df = pd.DataFrame(visits_serializer.data, index=[0])
-        id_column = 'PTID'
-        date_column = 'VISCODE'
-        label_column = 'DX'
-        pad_value = 10**5
-        selected_months = [0, 6, 12, 18, 24]
-
-        features = ['RAVLT_immediate','ADAS11','ADAS13','MMSE',
-        'Hippocampus',
-        'WholeBrain',
-        'FDG',
-        'MidTemp',
-        'Entorhinal',
-        'Fusiform','ICV',
-        'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]
-
-        features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
-
-        features_list = sorted(features + features_bl)
-        cols = [id_column, date_column] + features_list
-        data_2d, num_column_list, cat_column_list, mapping = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=False)
-
-        values = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=["Dementia","MCI"])
-
-        values = values.astype(float)
-
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-    
-        model = torch.load('api/binary_classifier_model.pth').to(device)
-
-        with torch.no_grad():
-         values = torch.from_numpy(values).float()
-         pred = model(values)
-
-
-        return JsonResponse({"status": {"success": True, "message": "Successfully fetched"}, "category": str(pred.argmax(1).numpy()[0])},status=200)
-    
-
 
 @csrf_exempt
 def getVisitss(request):
@@ -287,7 +246,43 @@ def getPatientProfile(request,id):
         patient_serializer = PatientSerializer(patient)
         visits = Visits.objects.filter(PTID=id)
         visit_serializer = VisitsSerializer(visits,many=True)
-        return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"patient": patient_serializer.data,"visits":visit_serializer.data},status=200) 
+        df = pd.DataFrame(visit_serializer.data)
+        id_column = 'PTID'
+        date_column = 'VISCODE'
+        label_column = 'DX'
+        pad_value = 10**5
+        selected_months = [0, 6, 12, 18, 24]
+
+        features = ['RAVLT_immediate','ADAS11','ADAS13','MMSE',
+        'Hippocampus',
+        'WholeBrain',
+        'FDG',
+        'MidTemp',
+        'Entorhinal',
+        'Fusiform','ICV',
+        'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]
+
+        df['AGE'] = pd.to_numeric(df["AGE"], downcast="float")
+
+        features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
+
+        features_list = sorted(features + features_bl)
+        cols = [id_column, date_column] + features_list
+        data_2d, num_column_list, cat_column_list, mapping = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=False)
+        values = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=["Dementia","MCI"])
+        values = values.astype(float)
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+        model = torch.load('api/binary_classifier_model.pth').to(device)
+
+        with torch.no_grad():
+         values = torch.from_numpy(values).float()
+         pred = model(values)
+         print(str(pred.argmax(1).numpy()))
+
+
+        return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"patient": patient_serializer.data,"visits":visit_serializer.data, "categories":str(pred.argmax(1).numpy())},status=200) 
 
 
           
