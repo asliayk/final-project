@@ -151,13 +151,14 @@ function Patient(props) {
     useEffect(() => {
         const id = props.location.state.id;
 
-            fetch( 'http://ldjangol.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/patientProfile/'+id
+            fetch( 'http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/patientProfile/'+id
         , {
                 method: 'GET',
                 headers: {'Content-Type': 'application/json'}
             }).then(res => res.json())
                 .then(json => {
                     setprognosis(json.visits)
+                    console.log(prognosis)
                     setlastdiagnosis(json.patient.DX)
                     //setlastdiagnosisscore(json.patient.LastScore)
 
