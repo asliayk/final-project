@@ -297,7 +297,7 @@ def getPatientProfile(request,id):
         patient_serializer = PatientSerializer(patient)
         
         visits = Visit.objects.filter(PTID=id)
-        sortedvisits = sorted(visits.values(), key=lambda x: datetime.strptime(x['EXAMDATE'], '%d.%m.%Y'))
+        sortedvisits = sorted(visits.values(), key=lambda x: datetime.strptime(x['EXAMDATE'], '%d.%m.%Y'), reverse=True)
 
         visit_serializer = VisitSerializer(sortedvisits,many=True)
         df = pd.DataFrame(visit_serializer.data)
