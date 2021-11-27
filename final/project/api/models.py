@@ -22,7 +22,7 @@ class Patient(models.Model):
     EXAMDATE = models.CharField(max_length=50)
 
 
-class Visits(models.Model):    
+class Visit(models.Model):    
     RID = models.CharField(max_length=30)
     PTID = models.CharField(max_length=30)
     VISCODE = models.CharField(max_length=30)
@@ -83,21 +83,6 @@ class Visits(models.Model):
     update_stamp =  models.CharField(max_length=50)
     FDG_bl =  models.CharField(max_length=30)
 
-class Statistics(models.Model):
-    AvgAge = models.CharField(max_length=10)
-    FemalePercentage = models.CharField(max_length=10)
-    MarriedPercentage_m = models.CharField(max_length=10)
-    DivorcedPercentage_m = models.CharField(max_length=10)
-    NeverMarriedPercentage_m = models.CharField(max_length=10)
-    UnknownPercentage_m = models.CharField(max_length=10)
-    WidowedPercentage_m = models.CharField(max_length=10)
-    WhitePercentage_race = models.CharField(max_length=10)   
-    AsianPercentage_race = models.CharField(max_length=10)
-    BlackPercentage_race = models.CharField(max_length=10)
-    UnknownPercentage_race = models.CharField(max_length=10) 
-    HawaiianPercentage_race = models.CharField(max_length=10) 
-    AmIndianAlaskanPercentage_race = models.CharField(max_length=10) 
-    MoreThanOnePercentage_race = models.CharField(max_length=10) 
 
 
 

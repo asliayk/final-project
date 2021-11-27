@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import Doctor, Patient, Visits, Statistics
+from api.models import Doctor, Patient, Visit
 
 class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,9 +12,9 @@ class PatientSerializer(serializers.ModelSerializer):
         fields=('PTID','AGE','PTGENDER','PTEDUCAT','PTETHCAT','PTRACCAT','PTMARRY','APOE4','DX_bl','DX','EXAMDATE')     
 
 
-class VisitsSerializer(serializers.ModelSerializer):
+class VisitSerializer(serializers.ModelSerializer):
     class Meta:
-        model=Visits
+        model=Visit
         fields=('RID','PTID','VISCODE','SITE','D1',
         'D2','COLPROT','ORIGPROT','EXAMDATE','DX_bl',
         'DXCHANGE','AGE','PTGENDER','PTEDUCAT','PTETHCAT',
@@ -27,11 +27,6 @@ class VisitsSerializer(serializers.ModelSerializer):
         'Ventricles_bl','Hippocampus_bl','WholeBrain_bl','Entorhinal_bl','Fusiform_bl',
         'MidTemp_bl','ICV_bl','Years_bl','Month_bl','Month','M','update_stamp','FDG_bl')      
 
-class StatisticsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model=Statistics
-        fields=('AvgAge','FemalePercentage','MarriedPercentage_m','DivorcedPercentage_m','NeverMarriedPercentage_m',
-        'UnknownPercentage_m','WidowedPercentage_m','WhitePercentage_race','AsianPercentage_race','BlackPercentage_race',
-        'UnknownPercentage_race','HawaiianPercentage_race','AmIndianAlaskanPercentage_race','MoreThanOnePercentage_race')            
+    
 
             

@@ -3,8 +3,8 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from django.http.response import JsonResponse
 
-from api.models import Doctor, Patient, Visits, Statistics
-from api.serializers import DoctorSerializer, PatientSerializer, VisitsSerializer, StatisticsSerializer
+from api.models import Doctor, Patient, Visit
+from api.serializers import DoctorSerializer, PatientSerializer, VisitSerializer
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -24,6 +24,8 @@ from classifier import Classifier
 
 
 from torch import nn
+from django.db.models import Avg
+from django.db.models import Count
 
 
 # Create your views here.
@@ -126,16 +128,63 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
 @csrf_exempt
 def getVisitss(request):
     if request.method == 'GET':
-        visitss = Visits.objects.all()
-        visits_serializer = VisitsSerializer(visitss,many=True)
+        visitss = Visit.objects.all()
+        visits_serializer = VisitSerializer(visitss,many=True)
         return JsonResponse({"status": {"success": True, "message": "Successfully fetched"},"visits": visits_serializer.data},status=200)
 
 @csrf_exempt
 def getStatistics(request):
     if request.method == 'GET':
-        statistics = Statistics.objects.all()
-        statistics_serializer = StatisticsSerializer(statistics,many=True)
-        return JsonResponse({"status": {"success": True, "message": "Successfully fetched"},"statistics": statistics_serializer.data},status=200)         
+        total = Patient.objects.all().count()    
+
+        qGender = list(Patient.objects.values('PTGENDER').order_by().annotate(Count('PTGENDER')))
+        for item in qGender:
+            if item["PTGENDER"]=='Female':
+                FemalePercentage = str(float("{:.2f}".format((item["PTGENDER__count"]/total)*100)))
+            elif item["PTGENDER"]=='Male':
+                MalePercentage = str(float("{:.2f}".format((item["PTGENDER__count"]/total)*100)))    
+    
+        qMarry = list(Patient.objects.values('PTMARRY').order_by().annotate(Count('PTMARRY')))
+        for item in qMarry:
+            if item["PTMARRY"]=='Married':
+                MarriedPercentage_m = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))
+            elif item["PTMARRY"]=='Divorced':
+                DivorcedPercentage_m = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))  
+            elif item["PTMARRY"]=='Never married':
+                NeverMarriedPercentage_m = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))     
+            elif item["PTMARRY"]=='Unknown':
+                UnknownPercentage_m = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))    
+            elif item["PTMARRY"]=='Widowed':
+                WidowedPercentage_m = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))      
+
+
+        qRaccat = list(Patient.objects.values('PTRACCAT').order_by().annotate(Count('PTRACCAT')))
+        for item in qRaccat:
+            if item["PTRACCAT"]=='White':
+                WhitePercentage_race = str(float("{:.2f}".format((item["PTRACCAT__count"]/total)*100)))
+            elif item["PTRACCAT"]=='Asian':
+                AsianPercentage_race = str(float("{:.2f}".format((item["PTRACCAT__count"]/total)*100)))  
+            elif item["PTRACCAT"]=='Black':
+                BlackPercentage_race = str(float("{:.2f}".format((item["PTRACCAT__count"]/total)*100)))     
+            elif item["PTRACCAT"]=='Unknown':
+                UnknownPercentage_race = str(float("{:.2f}".format((item["PTRACCAT__count"]/total)*100)))    
+            elif item["PTRACCAT"]=='More than one':
+                MoreThanOnePercentage_race = str(float("{:.2f}".format((item["PTRACCAT__count"]/total)*100))) 
+            elif item["PTRACCAT"]=='Am Indian/Alaskan':
+                AmIndianAlaskanPercentage_race = str(float("{:.2f}".format((item["PTRACCAT__count"]/total)*100)))     
+            elif item["PTRACCAT"]=='Hawaiian/Other PI':
+                HawaiianPercentage_race = str(float("{:.2f}".format((item["PTRACCAT__count"]/total)*100)))     
+  
+
+        statistics = {"AvgAge": "67.10", "FemalePercentage": FemalePercentage, "MarriedPercentage_m": MarriedPercentage_m,
+        "WidowedPercentage_m": WidowedPercentage_m, "NeverMarriedPercentage_m": NeverMarriedPercentage_m, "DivorcedPercentage_m": DivorcedPercentage_m,
+        "UnknownPercentage_m": UnknownPercentage_m, "WhitePercentage_race": WhitePercentage_race, "BlackPercentage_race": BlackPercentage_race,
+        "AsianPercentage_race": AsianPercentage_race, "UnknownPercentage_race": UnknownPercentage_race, "AmIndianAlaskanPercentage_race": AmIndianAlaskanPercentage_race,
+        "MoreThanOnePercentage_race": MoreThanOnePercentage_race, "HawaiianPercentage_race": HawaiianPercentage_race}
+
+        slist = []
+        slist.append(statistics)
+        return JsonResponse({"status": {"success": True, "message": "Successfully fetched"},"statistics": slist},status=200)         
 
 
 @csrf_exempt
@@ -244,8 +293,8 @@ def getPatientProfile(request,id):
             return JsonResponse({"status": {"success": False,"message": "There is no patient with that id"}},status=400)
         patient = Patient.objects.filter(PTID=id).first()
         patient_serializer = PatientSerializer(patient)
-        visits = Visits.objects.filter(PTID=id)
-        visit_serializer = VisitsSerializer(visits,many=True)
+        visits = Visit.objects.filter(PTID=id)
+        visit_serializer = VisitSerializer(visits,many=True)
         df = pd.DataFrame(visit_serializer.data)
         id_column = 'PTID'
         date_column = 'VISCODE'
