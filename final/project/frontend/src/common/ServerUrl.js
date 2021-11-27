@@ -1,1 +1,1 @@
-export let serverUrl = 'http://ldjangol.eba-ixskapzh.us-west-2.elasticbeanstalk.com/';
+export let serverUrl = 'http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/';

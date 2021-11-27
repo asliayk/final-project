@@ -56,15 +56,13 @@ function Login() {
     //handlers
     function onChange(event) {
         let mutableState = state
-        console.log(mutableState)
         mutableState[event.target.id] = event.target.value
         setState(mutableState)
-        console.log(state+'zzzzzzzz')
     }
 
     function handleOnClick() {
 
-            const url = "http://ldjangol.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/login";
+            const url = "http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/login";
             const data = {
                 DoctorId: state.DoctorId,
                 Password: state.Password,
@@ -76,7 +74,6 @@ function Login() {
             body: JSON.stringify(data)
         }).then(res => res.json())
             .then(json => {
-                console.log(json)
                 const success = json.status.success
                 if (success) {
                     setLogged(true)

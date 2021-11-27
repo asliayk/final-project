@@ -158,7 +158,6 @@ function Patient(props) {
             }).then(res => res.json())
                 .then(json => {
                     setprognosis(json.visits)
-                    console.log(prognosis)
                     setlastdiagnosis(json.patient.DX)
                     //setlastdiagnosisscore(json.patient.LastScore)
 

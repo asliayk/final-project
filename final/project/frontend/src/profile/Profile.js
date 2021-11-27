@@ -139,16 +139,15 @@ function Profile(props) {
     useEffect(() => {
         const docid=props.location.state.id
 
-            fetch( 'http://ldjangol.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/doctorProfile/'+docid+'/'
+            fetch( 'http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/doctorProfile/'+docid+'/'
         , {
                 method: 'GET',
                 headers: {'Content-Type': 'application/json'}
             }).then(res => res.json())
                 .then(json => {
-                    console.log( json.doctor.Surname)
 
                     setName({first_name: json.doctor.Name,last_name: json.doctor.Surname,email: json.doctor.Mail})
-                    console.log(name)
+                 
 
                 }).then(() => {
                 setLoadPage(true)
