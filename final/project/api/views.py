@@ -1,7 +1,9 @@
+from datetime import datetime
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from django.http.response import JsonResponse
+from django.db.models import DateField
 
 from api.models import Doctor, Patient, Visit
 from api.serializers import DoctorSerializer, PatientSerializer, VisitSerializer
@@ -24,8 +26,8 @@ from classifier import Classifier
 
 
 from torch import nn
-from django.db.models import Avg
 from django.db.models import Count
+from django.db.models.functions import Cast
 
 
 # Create your views here.
@@ -293,8 +295,11 @@ def getPatientProfile(request,id):
             return JsonResponse({"status": {"success": False,"message": "There is no patient with that id"}},status=400)
         patient = Patient.objects.filter(PTID=id).first()
         patient_serializer = PatientSerializer(patient)
+        
         visits = Visit.objects.filter(PTID=id)
-        visit_serializer = VisitSerializer(visits,many=True)
+        sortedvisits = sorted(visits.values(), key=lambda x: datetime.strptime(x['EXAMDATE'], '%d.%m.%Y'))
+
+        visit_serializer = VisitSerializer(sortedvisits,many=True)
         df = pd.DataFrame(visit_serializer.data)
         id_column = 'PTID'
         date_column = 'VISCODE'

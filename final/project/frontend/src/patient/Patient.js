@@ -274,7 +274,7 @@ function Patient(props) {
 
                                                     id="race"
                                                     name="race"
-                                                    label="race"
+                                                    label="Race"
                                                     fullWidth
                                                     variant="outlined"
                                                     disabled={!edit}
