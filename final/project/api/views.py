@@ -83,11 +83,11 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
  
     months_list = [0] + [int(x[-2:]) for x in df[date_column].unique() if x != 'bl']
     time_dict = dict(zip(df[date_column].unique(), months_list))
-    #num_column_list = sorted([col for col in df.select_dtypes(include=["int", "int64", "float"]).columns if
-    #                          col not in [id_column, date_column, label_column]])
-    #cat_column_list = sorted([col for col in df.select_dtypes(include=['category', 'object']).columns if
-    #                          col not in [id_column, date_column, label_column]])
-    num_column_list = ['ADAS11', 'ADAS11_bl', 'ADAS13', 'ADAS13_bl', 'AGE', 'APOE4', 'CDRSB', 'CDRSB_bl', 'Entorhinal', 'Entorhinal_bl', 'FAQ', 'FAQ_bl', 'FDG', 'FDG_bl', 'Fusiform', 'Fusiform_bl', 'Hippocampus', 'Hippocampus_bl', 'ICV', 'ICV_bl', 'MMSE', 'MMSE_bl', 'MidTemp', 'MidTemp_bl', 'RAVLT_immediate', 'RAVLT_immediate_bl', 'Ventricles', 'Ventricles_bl', 'WholeBrain', 'WholeBrain_bl']
+    num_column_list = sorted([col for col in df.select_dtypes(include=["int", "int64", "float"]).columns if
+                              col not in [id_column, date_column, label_column]])
+    cat_column_list = sorted([col for col in df.select_dtypes(include=['category', 'object']).columns if
+                              col not in [id_column, date_column, label_column]])
+    #num_column_list = ['ADAS11', 'ADAS11_bl', 'ADAS13', 'ADAS13_bl', 'AGE', 'APOE4', 'CDRSB', 'CDRSB_bl', 'Entorhinal', 'Entorhinal_bl', 'FAQ', 'FAQ_bl', 'FDG', 'FDG_bl', 'Fusiform', 'Fusiform_bl', 'Hippocampus', 'Hippocampus_bl', 'ICV', 'ICV_bl', 'MMSE', 'MMSE_bl', 'MidTemp', 'MidTemp_bl', 'RAVLT_immediate', 'RAVLT_immediate_bl', 'Ventricles', 'Ventricles_bl', 'WholeBrain', 'WholeBrain_bl']
   
     
     cat_column_list = []
@@ -128,7 +128,7 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
     return df, num_column_list, cat_column_list, mapping
 
 @csrf_exempt
-def getVisitss(request):
+def getVisits(request):
     if request.method == 'GET':
         visitss = Visit.objects.all()
         visits_serializer = VisitSerializer(visitss,many=True)
@@ -286,7 +286,7 @@ def getDoctorProfile(request,num):
         doctor_serializer = DoctorSerializer(doctor)
         patients = Patient.objects.all()
         patient_serializer = PatientSerializer(patients,many=True)
-        return JsonResponse({"status": {"success": True, "message": "Successfully fectched"},"doctor": doctor_serializer.data,"patients":patient_serializer.data},status=200)       
+        return JsonResponse({"status": {"success": True, "message": "Successfully fetched"},"doctor": doctor_serializer.data,"patients":patient_serializer.data},status=200)       
 
 @csrf_exempt
 def getPatientProfile(request,id): 
@@ -297,7 +297,8 @@ def getPatientProfile(request,id):
         patient_serializer = PatientSerializer(patient)
         
         visits = Visit.objects.filter(PTID=id)
-        sortedvisits = sorted(visits.values(), key=lambda x: datetime.strptime(x['EXAMDATE'], '%d.%m.%Y'), reverse=True)
+        sortedvisits = list(sorted(visits.values(), key=lambda x: datetime.strptime(x['EXAMDATE'], '%d.%m.%Y')))
+        sortedvisits.reverse()
 
         visit_serializer = VisitSerializer(sortedvisits,many=True)
         df = pd.DataFrame(visit_serializer.data)
@@ -316,7 +317,40 @@ def getPatientProfile(request,id):
         'Fusiform','ICV',
         'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]
 
+
         df['AGE'] = pd.to_numeric(df["AGE"], downcast="float")
+        df['ADAS11'] = pd.to_numeric(df["ADAS11"], downcast="float")
+        df['ADAS11_bl'] = pd.to_numeric(df["ADAS11_bl"], downcast="float")
+        df['ADAS13'] = pd.to_numeric(df["ADAS13"], downcast="float")
+        df['ADAS13_BL'] = pd.to_numeric(df["ADAS13_bl"], downcast="float")
+        df['AGE'] = pd.to_numeric(df["AGE"], downcast="float")
+        df['APOE4'] = pd.to_numeric(df["APOE4"], downcast="float")
+        df['CDRSB'] = pd.to_numeric(df["CDRSB"], downcast="float")
+        df['CDRSB_bl'] = pd.to_numeric(df["CDRSB_bl"], downcast="float")
+        df['Entorhinal'] = pd.to_numeric(df["Entorhinal"], downcast="float")
+        df['Entorhinal_bl'] = pd.to_numeric(df["Entorhinal_bl"], downcast="float")
+        df['FAQ'] = pd.to_numeric(df["FAQ"], downcast="float")
+        df['FAQ_bl'] = pd.to_numeric(df["FAQ_bl"], downcast="float")
+        df['FDG'] = pd.to_numeric(df["FDG"], downcast="float")
+        df['FDG_bl'] = pd.to_numeric(df["FDG_bl"], downcast="float")
+        df['Fusiform'] = pd.to_numeric(df["Fusiform"], downcast="float")
+        df['Fusiform_bl'] = pd.to_numeric(df["Fusiform_bl"], downcast="float")
+        df['Hippocampus'] = pd.to_numeric(df["Hippocampus"], downcast="float")
+        df['Hippocampus_bl'] = pd.to_numeric(df["Hippocampus_bl"], downcast="float")
+        df['ICV'] = pd.to_numeric(df["ICV"], downcast="float")
+        df['ICV_bl'] = pd.to_numeric(df["ICV_bl"], downcast="float")
+        df['MMSE'] = pd.to_numeric(df["MMSE"], downcast="float")
+        df['MMSE_bl'] = pd.to_numeric(df["MMSE_bl"], downcast="float")
+        df['MidTemp'] = pd.to_numeric(df["MidTemp"], downcast="float")
+        df['MidTemp_bl'] = pd.to_numeric(df["MidTemp_bl"], downcast="float")
+        df['RAVLT_immediate'] = pd.to_numeric(df["RAVLT_immediate"], downcast="float")
+        df['RAVLT_immediate_bl'] = pd.to_numeric(df["RAVLT_immediate_bl"], downcast="float")
+        df['MMSE_bl'] = pd.to_numeric(df["MMSE_bl"], downcast="float")
+        df['Ventricles'] = pd.to_numeric(df["Ventricles"], downcast="float")
+        df['Ventricles_bl'] = pd.to_numeric(df["Ventricles_bl"], downcast="float")
+        df['WholeBrain'] = pd.to_numeric(df["WholeBrain"], downcast="float")
+        df['WholeBrain_bl'] = pd.to_numeric(df["WholeBrain_bl"], downcast="float")
+
 
         features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
 
