@@ -113,9 +113,10 @@ export default function Doctor_patients_list(props) {
     let lendivideten=1;
     const[plist,setPlist]= useState([]);
     const[inpage,setinpage]= useState(false);
+    const docid=props.location.state.id;
 
     useEffect(() => {
-        const docid=props.location.state.id;
+
 
         fetch("http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/doctorProfile/"+docid+'/', {
 
@@ -197,7 +198,7 @@ export default function Doctor_patients_list(props) {
                     style={{ flexDirection: "column", position: "relative" }}
                     container>
                     <Link
-                        to={{pathname: "/patient", state: {id:plist[index].PTID}}}
+                        to={{pathname: "/patient", state: {id:plist[index].PTID,docid:docid}}}
                     >
                         <Typography gutterBottom variant="h4">
                             {plist[index].PTID + " : " + plist[index].DX }
@@ -217,7 +218,16 @@ export default function Doctor_patients_list(props) {
             <div  >
                 <div style={{marginTop: "1rem", overflow:'hidden'}} >
                     <Breadcrumbs style={{color: "#0B3954"}} separator="›">
-                        <Link style={{color: "#0B3954"}} >
+                        <Link style={{marginLeft: "3rem", color: "#0B3954"}}to={{
+                            pathname: '/profile',
+                            state: { id: docid }
+                        }}>
+                            My Account
+                        </Link>
+                        <Link style={{color: "#0B3954"}} to={{
+                            pathname: '/doctorpatients',
+                            state: { id: docid }
+                        }} >
                             My Patients
                         </Link>
                     </Breadcrumbs>

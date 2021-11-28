@@ -147,8 +147,7 @@ function Login() {
                         <Button
                             color="primary"
                             style={{ textTransform: "none" }}
-                            to="/forgot/enter/email"
-                            component={Link}
+                           // to="/forgot/enter/email" component={Link}
                         >
                             <b>Forgot password?</b>
                         </Button>
@@ -157,8 +156,7 @@ function Login() {
                         <Button
                             color="primary"
                             style={{ textTransform: "none" }}
-                            to="/signup"
-                            component={Link}
+                            //to="/signup" component={Link}
                         >
                             <b>Sign Up</b>
                         </Button>

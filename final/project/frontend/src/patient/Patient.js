@@ -96,28 +96,33 @@ function Patient(props) {
     const classes = useStyles();
     let [open, setOpen] = React.useState(false);
     let [edit, setEdit] = React.useState(false);
-    let [nameChanged, setNameChanged] = React.useState(false);
-    let [surnameChanged, setSurnameChanged] = React.useState(false);
-    let [emailChanged, setEmailChanged] = React.useState(false);
-    let [addressChanged, setAddressChanged] = React.useState(false);
-    let [usernameChanged, setUsernameChanged] = React.useState(false);
+    // let [nameChanged, setNameChanged] = React.useState(false);
+    //let [surnameChanged, setSurnameChanged] = React.useState(false);
+    //let [emailChanged, setEmailChanged] = React.useState(false);
+    //let [addressChanged, setAddressChanged] = React.useState(false);
+    //let [usernameChanged, setUsernameChanged] = React.useState(false);
     let [prognosis, setprognosis] = React.useState([]);
     let [lastdiagnosis, setlastdiagnosis] = React.useState();
     let [lastdiagnosisscore, setlastdiagnosisscore] = React.useState();
 
 
+/*
 
     const handleClick = () => {
         setOpen(!open);
 
     };
+*/
 
 
     const [name, setName] = useState({
 
         first_name: '',
         last_name: '',
-        email: '',
+        sex: '',
+        age: '',
+        maritalStatus: '',
+        race: '',
 
     });
 
@@ -147,16 +152,18 @@ function Patient(props) {
         setName(mutableState)
     }
 
-
+    const id = props.location.state.id;
+    const docid = props.location.state.docid;
     useEffect(() => {
-        const id = props.location.state.id;
 
-            fetch( 'http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/patientProfile/'+id
+
+            fetch( 'http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/patientProfile/'+id+'/'
         , {
                 method: 'GET',
                 headers: {'Content-Type': 'application/json'}
             }).then(res => res.json())
                 .then(json => {
+                    //console.log(json)
                     setprognosis(json.visits)
                     setlastdiagnosis(json.patient.DX)
                     //setlastdiagnosisscore(json.patient.LastScore)
@@ -188,8 +195,23 @@ function Patient(props) {
                     </div>
                     <div style={{marginTop: "1rem"}}>
                         <Breadcrumbs style={{color: "#0B3954"}} separator="›">
-                            <Link style={{marginLeft: "3rem", color: "#0B3954"}}to="/profile">
+                            <Link style={{marginLeft: "3rem", color: "#0B3954"}}to={{
+                                pathname: '/profile',
+                                state: { id: docid }
+                            }}>
                                 My Account
+                            </Link>
+                            <Link style={{color: "#0B3954"}} to={{
+                                pathname: '/doctorpatients',
+                                state: { id: docid }
+                            }} >
+                                My Patients
+                            </Link>
+                            <Link style={{color: "#0B3954"}} to={{
+                                pathname: '/patient',
+                                state: { id: id }
+                            }} >
+                                Patient {name.first_name}
                             </Link>
                         </Breadcrumbs>
                     </div>

@@ -172,7 +172,10 @@ function Profile(props) {
                     </div>
                     <div style={{marginTop: "1rem"}}>
                         <Breadcrumbs style={{color: "#0B3954"}} separator="›">
-                            <Link style={{marginLeft: "3rem", color: "#0B3954"}}to="/profile">
+                            <Link style={{marginLeft: "3rem", color: "#0B3954"}}to={{
+                                pathname: '/profile',
+                                state: { id: id }
+                            }}>
                                 My Account
                             </Link>
                         </Breadcrumbs>
@@ -219,14 +222,16 @@ function Profile(props) {
                                                 </ListItem>
                                                 </Link>
                                                 <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
-                                                          component={Link}
-                                                          to="/add-product">
+                                                          //component={Link} to="/add-product"
+                                                    >
                                                     <ListItemIcon>
                                                         <AddCircleIcon/>
                                                     </ListItemIcon>
                                                     <ListItemText primary="Add Patient"/>
                                                 </ListItem>
-                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}} component={Link} to="/profile/changepassword">
+                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                         // component={Link} to="/profile/changepassword"
+                                                >
                                                     <ListItemIcon>
                                                         <LockIcon/>
                                                     </ListItemIcon>
@@ -391,7 +396,7 @@ function Profile(props) {
                                                         backgroundColor: "#0B3954",
                                                     }}
                                                     variant="contained" color="primary"
-                                                    onClick={() => setEdit(true)}
+                                                   // onClick={() => setEdit(true)}
                                                 >
                                                     Edit
                                                 </Button>
