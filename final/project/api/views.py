@@ -201,9 +201,7 @@ def getPatients(request):
     if request.method == 'GET':
         patients = Patient.objects.all()
         patient_serializer = PatientSerializer(patients,many=True)
-        return JsonResponse({"status": {"success": True, "message": "Successfully fetched"},"patients": patient_serializer.data},status=200)     
-
-  
+        return JsonResponse({"status": {"success": True, "message": "Successfully fetched"},"patients": patient_serializer.data},status=200)       
 
 @csrf_exempt
 def addDoctor(request):
@@ -222,8 +220,18 @@ def addPatient(request):
         patient_serializer = PatientSerializer(data=patient_data)
         if patient_serializer.is_valid():
             patient_serializer.save()
-            return JsonResponse({"status": {"success": True, "message": "Patient is added successfully"}},status=200)  
-        return JsonResponse({"status": {"success": False, "message": "Patient couldn't be added"}},status=400)         
+            return JsonResponse({"status": {"success": True, "message": "Patient is added successfully"}, "pid":patient_serializer.data['PTID']},status=200)  
+        return JsonResponse({"status": {"success": False, "message": "Patient couldn't be added"}},status=400)  
+
+@csrf_exempt
+def addVisit(request):
+    if request.method == 'POST':
+        visit_data = JSONParser().parse(request)
+        visit_serializer = VisitSerializer(data=visit_data)
+        if visit_serializer.is_valid():
+            visit_serializer.save()
+            return JsonResponse({"status": {"success": True, "message": "Visit is added successfully"}},status=200)   
+        return JsonResponse({"status": {"success": False, "message": "Visit couldn't be added"}},status=400)  
 
 @csrf_exempt
 def loginDoctor(request):
@@ -273,9 +281,19 @@ def deleteDoctor(request):
 def deletePatient(request):   
     if request.method == 'DELETE': 
         patient_data = JSONParser().parse(request)         
-        patient = Patient.objects.get(PatientId=patient_data['PatientId'])
+        patient = Patient.objects.get(PTID=patient_data['PTID'])
         patient.delete()
-        return JsonResponse({"status": {"success": True,"message": "successfully deleted"}},status=200)        
+        visits = Visit.objects.filter(PTID=patient_data["PTID"])
+        visits.delete()
+        return JsonResponse({"status": {"success": True,"message": "successfully deleted"}},status=200)    
+
+@csrf_exempt
+def deleteVisit(request):   
+    if request.method == 'DELETE': 
+        visit_data = JSONParser().parse(request)         
+        visit = Visit.objects.get(RID=visit_data['RID'],PTID=visit_data['PTID'],VISCODE=visit_data['VISCODE'])
+        visit.delete()
+        return JsonResponse({"status": {"success": True,"message": "successfully deleted"}},status=200)              
 
 @csrf_exempt
 def getDoctorProfile(request,num):  

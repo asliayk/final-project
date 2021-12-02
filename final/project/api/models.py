@@ -1,4 +1,11 @@
 from django.db import models
+import time
+
+def return_timestamped_id():
+    prefix = "000"     
+    timestamp = str(int(time.time()*10000000))
+    default_value = prefix + timestamp
+    return(default_value)
 
 # Create your models here.
 class Doctor(models.Model):
@@ -9,7 +16,7 @@ class Doctor(models.Model):
     Mail = models.EmailField()
 
 class Patient(models.Model):
-    PTID= models.CharField(primary_key=True, max_length=30)
+    PTID= models.CharField(primary_key=True, max_length=256, default=return_timestamped_id)
     AGE = models.CharField(max_length=30)
     PTGENDER = models.CharField(max_length=30)
     PTEDUCAT = models.CharField(max_length=30)
