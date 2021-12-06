@@ -9,3 +9,4 @@ api/__pycache__
 project/__pycache__
 api/migrations
 frontend/migrations
+frontend/build
