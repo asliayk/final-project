@@ -320,6 +320,8 @@ def getPatientProfile(request,id):
 
         visit_serializer = VisitSerializer(sortedvisits,many=True)
         df = pd.DataFrame(visit_serializer.data)
+        if df.empty:
+          return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"patient": patient_serializer.data,"visits":[]},status=200)   
         id_column = 'PTID'
         date_column = 'VISCODE'
         label_column = 'DX'
