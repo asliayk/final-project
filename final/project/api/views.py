@@ -227,6 +227,9 @@ def addPatient(request):
 def addVisit(request):
     if request.method == 'POST':
         visit_data = JSONParser().parse(request)
+        patient = Patient.objects.filter(PTID=visit_data['PTID']).first()
+        if patient is None:
+            return JsonResponse({"status": {"success": True, "message": "There is no patient with that PTID"}},status=200)  
         visit_serializer = VisitSerializer(data=visit_data)
         if visit_serializer.is_valid():
             visit_serializer.save()
