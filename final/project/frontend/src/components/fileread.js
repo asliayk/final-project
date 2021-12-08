@@ -37,12 +37,9 @@ export const FileRead  = ({id}) =>{
 
 
 
-/*const handleOnClick2=()=>{
-    console.log(result.split(',')[0].split(' ')[result.split(',')[0].split(' ').length-1])
-    console.log(result.split(',')[1].split(' ')[result.split(',')[1].split(' ').length-1])
-    console.log(result.split(',')[2].split(' ')[result.split(',')[2].split(' ').length-1])
-    console.log(result.split(',')[3].split(' ')[result.split(',')[3].split(' ').length-1])
-};*/
+const handleOnClick2=()=>{
+
+};
 
     const handleOnClick = () => {
         console.log('inside')
@@ -106,8 +103,8 @@ export const FileRead  = ({id}) =>{
             Month_bl: result.split(',')[54].split(' ')[result.split(',')[54].split(' ').length-1],
             Month: result.split(',')[55].split(' ')[result.split(',')[55].split(' ').length-1],
             M: result.split(',')[56].split(' ')[result.split(',')[56].split(' ').length-1],
-            update_stamp: result.split(',')[57].split(' ')[result.split(',')[57].split(' ').length-1],
-            FDG_bl: result.split(',')[58].split(' ')[result.split(',')[58].split(' ').length-1],
+            update_stamp: result.split('update_stamp')[1].split(': ')[1].split(',')[0],
+            FDG_bl: result.split('FDG_bl')[1].split(': ')[1].replace(/\D/g, ""),
         }
 
         fetch(url, {
@@ -120,7 +117,6 @@ export const FileRead  = ({id}) =>{
                 const success = json.status.success
                 console.log(success)
                 if (success) {
-                    console.log()
                     console.log('aaaa')
 
                 } else {
@@ -153,7 +149,7 @@ export const FileRead  = ({id}) =>{
                         }}
                         variant="contained"
 
-                        onClick={handleOnClick}
+                        onClick={result!=''?handleOnClick:handleOnClick2()}
                     >
                         ADD
                     </Button>
