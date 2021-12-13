@@ -53,11 +53,11 @@ def prepare_model_data_2d(dat, test_ratio, pad_value, num_column_list, target_co
     id_column = 'PTID'
     date_column = 'VISCODE'
     #dat = dat[dat[label_column].isin(selected_labels)]
- 
-    #scaler_x = StandardScaler()
-    #scaler_x.fit(dat[num_column_list])
 
-    #dat[num_column_list] = scaler_x.transform(dat[num_column_list])
+    scaler_x = StandardScaler()
+    scaler_x.fit(dat[num_column_list])
+    
+    dat[num_column_list] = scaler_x.transform(dat[num_column_list])
  
     label_num = dat[target_col].nunique()
     dat = pd.concat([dat.drop(target_col, axis=1), pd.get_dummies(dat[target_col])], axis=1)
@@ -66,8 +66,8 @@ def prepare_model_data_2d(dat, test_ratio, pad_value, num_column_list, target_co
     values = np.array(dat.sort_values([id_column, date_column]).iloc[:, 2:-(label_num)].values)
     labels = np.array(dat.sort_values([id_column, date_column]).iloc[:, -(label_num):].values)
 
+    """
     idx = int(len(values) * (1 - test_ratio))
-
     X_train = np.asarray(values[:idx, :]).astype('float32')
     y_train = np.asarray(labels[:idx, :]).astype('float32')
     pt_train = patients[:idx]
@@ -75,6 +75,7 @@ def prepare_model_data_2d(dat, test_ratio, pad_value, num_column_list, target_co
     y_test = np.asarray(labels[idx:, :]).astype('float32')
     pt_test = patients[idx:]
     #return X_train, y_train, pt_train, X_test, y_test, pt_test
+    """
     return values
 
 def data_preprocessing(data, columns, features_list, selected_months, is_2d, interpolation):
@@ -83,14 +84,16 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
  
     months_list = [0] + [int(x[-2:]) for x in df[date_column].unique() if x != 'bl']
     time_dict = dict(zip(df[date_column].unique(), months_list))
-    num_column_list = sorted([col for col in df.select_dtypes(include=["int", "int64", "float"]).columns if
+
+
+    num_column_list = sorted([col for col in df.select_dtypes(include=["int", "int64", "float","float32"]).columns if
                               col not in [id_column, date_column, label_column]])
     cat_column_list = sorted([col for col in df.select_dtypes(include=['category', 'object']).columns if
                               col not in [id_column, date_column, label_column]])
-    #num_column_list = ['ADAS11', 'ADAS11_bl', 'ADAS13', 'ADAS13_bl', 'AGE', 'APOE4', 'CDRSB', 'CDRSB_bl', 'Entorhinal', 'Entorhinal_bl', 'FAQ', 'FAQ_bl', 'FDG', 'FDG_bl', 'Fusiform', 'Fusiform_bl', 'Hippocampus', 'Hippocampus_bl', 'ICV', 'ICV_bl', 'MMSE', 'MMSE_bl', 'MidTemp', 'MidTemp_bl', 'RAVLT_immediate', 'RAVLT_immediate_bl', 'Ventricles', 'Ventricles_bl', 'WholeBrain', 'WholeBrain_bl']
+    #--num_column_list = ['ADAS11', 'ADAS11_bl', 'ADAS13', 'ADAS13_bl', 'AGE', 'APOE4', 'CDRSB', 'CDRSB_bl', 'Entorhinal', 'Entorhinal_bl', 'FAQ', 'FAQ_bl', 'FDG', 'FDG_bl', 'Fusiform', 'Fusiform_bl', 'Hippocampus', 'Hippocampus_bl', 'ICV', 'ICV_bl', 'MMSE', 'MMSE_bl', 'MidTemp', 'MidTemp_bl', 'RAVLT_immediate', 'RAVLT_immediate_bl', 'Ventricles', 'Ventricles_bl', 'WholeBrain', 'WholeBrain_bl']
   
     
-    cat_column_list = []
+    #--cat_column_list = []
     df = get_onehot_columns(df, cat_column_list)
    
     df[date_column] = df[date_column].apply(lambda x: time_dict[x])
@@ -345,7 +348,7 @@ def getPatientProfile(request,id):
         df['ADAS11'] = pd.to_numeric(df["ADAS11"], downcast="float")
         df['ADAS11_bl'] = pd.to_numeric(df["ADAS11_bl"], downcast="float")
         df['ADAS13'] = pd.to_numeric(df["ADAS13"], downcast="float")
-        df['ADAS13_BL'] = pd.to_numeric(df["ADAS13_bl"], downcast="float")
+        df['ADAS13_bl'] = pd.to_numeric(df["ADAS13_bl"], downcast="float")
         df['AGE'] = pd.to_numeric(df["AGE"], downcast="float")
         df['APOE4'] = pd.to_numeric(df["APOE4"], downcast="float")
         df['CDRSB'] = pd.to_numeric(df["CDRSB"], downcast="float")
@@ -390,18 +393,10 @@ def getPatientProfile(request,id):
         with torch.no_grad():
          values = torch.from_numpy(values).float()
          pred = model(values)
+         #print(pred)
         
         for cat,visit in zip(pred.argmax(1).numpy(),visit_serializer.data):
             visit.update({"category":str(cat)})    
 
 
         return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"patient": patient_serializer.data,"visits":visit_serializer.data},status=200) 
-
-
-          
-
-        
-
-
-
-                       
