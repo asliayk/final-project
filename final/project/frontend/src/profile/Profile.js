@@ -26,6 +26,7 @@ import Button from "@material-ui/core/Button";
 import LockIcon from '@material-ui/icons/Lock';
 import AddCircleIcon from '@material-ui/icons/AddCircle';
 import Tooltip from "@material-ui/core/Tooltip";
+import {PlaylistAdd} from "@material-ui/icons";
 
 
 
@@ -210,19 +211,17 @@ function Profile(props) {
                                                 component="nav"
                                                 className={classes.root}
                                             >
-                                                <Link
-                                                    to={{pathname: "/doctorpatients", state: {id: props.location.state.id}}}
 
-                                                >
-                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}>
+                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                          component={Link} to={{pathname: "/doctorpatients", state: {id: props.location.state.id}}}>
                                                     <ListItemIcon>
                                                         <ReorderIcon/>
                                                     </ListItemIcon>
                                                     <ListItemText primary="My Patients"/>
                                                 </ListItem>
-                                                </Link>
+
                                                 <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
-                                                          //component={Link} to="/add-product"
+                                                          component={Link} to={{pathname: "/patientadd", state: {id: props.location.state.id}}}
                                                     >
                                                     <ListItemIcon>
                                                         <AddCircleIcon/>
@@ -230,12 +229,12 @@ function Profile(props) {
                                                     <ListItemText primary="Add Patient"/>
                                                 </ListItem>
                                                 <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
-                                                         // component={Link} to="/profile/changepassword"
+                                                          component={Link}  to={{pathname: "/visitadd", state: {id: props.location.state.id}}}
                                                 >
                                                     <ListItemIcon>
-                                                        <LockIcon/>
+                                                        <PlaylistAdd/>
                                                     </ListItemIcon>
-                                                    <ListItemText primary="Change Password"/>
+                                                    <ListItemText primary="Add Visitation"/>
                                                 </ListItem>
 
                                             </List>
