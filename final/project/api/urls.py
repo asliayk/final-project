@@ -16,5 +16,6 @@ urlpatterns = [
     path("doctorProfile/<int:num>/",views.getDoctorProfile),
     path("patientProfile/<str:id>/",views.getPatientProfile),
     path("getVisits",views.getVisits),
-    path("getStatistics",views.getStatistics)
+    path("getStatistics",views.getStatistics),
+    path("getSimilarVisits",views.getSimilarVisits)
 ]
