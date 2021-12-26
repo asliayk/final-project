@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import Doctor, Patient, Visit
+from api.models import Doctor, Patient, Visit, TSNEImg
 
 class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -25,7 +25,12 @@ class VisitSerializer(serializers.ModelSerializer):
         'EXAMDATE_bl','CDRSB_bl','ADAS11_bl','ADAS13_bl','MMSE_bl',
         'RAVLT_immediate_bl','RAVLT_learning_bl','RAVLT_forgetting_bl','RAVLT_perc_forgetting_bl','FAQ_bl',
         'Ventricles_bl','Hippocampus_bl','WholeBrain_bl','Entorhinal_bl','Fusiform_bl',
-        'MidTemp_bl','ICV_bl','Years_bl','Month_bl','Month','M','update_stamp','FDG_bl')      
+        'MidTemp_bl','ICV_bl','Years_bl','Month_bl','Month','M','update_stamp','FDG_bl')  
+
+class TSNESerializer(serializers.ModelSerializer):
+    class Meta:
+        model=TSNEImg
+        fields=('ID', 'ImageBytes','isUpdated')            
 
     
 

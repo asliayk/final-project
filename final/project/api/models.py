@@ -90,6 +90,11 @@ class Visit(models.Model):
     update_stamp =  models.CharField(max_length=50)
     FDG_bl =  models.CharField(max_length=30)
 
+class TSNEImg(models.Model):   
+    ID = models.CharField(max_length=2)
+    ImageBytes = models.CharField(max_length=5000)
+    isUpdated = models.BooleanField()
+
 
 
 
