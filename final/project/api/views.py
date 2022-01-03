@@ -39,6 +39,7 @@ from django.db.models import Count
 from django.db.models.functions import Cast
 import math
 import json
+from scipy.special import softmax
 
 
 # Create your views here.
@@ -96,25 +97,32 @@ def do_padding(matrices, value, maxlen=None):
     ret = [np.pad(m, [(0, maxlen - len(m)), (0, 0)], 'constant', constant_values=(value, value))[:, None, :] for m in matrices]
     return np.concatenate(ret, axis=1)
 
-def prepare_model_data_2d(dat, test_ratio, pad_value, num_column_list, target_col="DX", selected_labels=None, isTSNE=False):
+def prepare_model_data_2d(dat, test_ratio, pad_value, num_column_list, target_col="DX", selected_labels=None, isTSNE=False, isSimilar=False):
     id_column = 'PTID'
     date_column = 'VISCODE'
-    if isTSNE:
+ 
+    if isTSNE or isSimilar:
         dat = dat[dat['DX'].isin(selected_labels)]
-
+ 
     scaler_x = StandardScaler()
     scaler_x.fit(dat[num_column_list])
     
     dat[num_column_list] = scaler_x.transform(dat[num_column_list])
+    
+ 
  
     label_num = dat[target_col].nunique()
     dat = pd.concat([dat.drop(target_col, axis=1), pd.get_dummies(dat[target_col])], axis=1)
  
     patients = np.array(dat.sort_values([id_column, date_column])[id_column].tolist())
-    values = np.array(dat.sort_values([id_column, date_column]).iloc[:, 2:-(label_num)].values)
-    labels = np.array(dat.sort_values([id_column, date_column]).iloc[:, -(label_num):].values)
+  
+    #-n values = np.array(dat.sort_values([id_column, date_column]).iloc[:, 2:-(label_num)].values)
+    #-n labels = np.array(dat.sort_values([id_column, date_column]).iloc[:, -(label_num):].values)
+    values = np.array(dat.iloc[:, 2:-(label_num)].values)
+    labels = np.array(dat.iloc[:, -(label_num):].values)
 
-    """
+ 
+    """ 
     idx = int(len(values) * (1 - test_ratio))
     X_train = np.asarray(values[:idx, :]).astype('float32')
     y_train = np.asarray(labels[:idx, :]).astype('float32')
@@ -122,12 +130,12 @@ def prepare_model_data_2d(dat, test_ratio, pad_value, num_column_list, target_co
     X_test = np.asarray(values[idx:, :]).astype('float32')
     y_test = np.asarray(labels[idx:, :]).astype('float32')
     pt_test = patients[idx:]
-    #return X_train, y_train, pt_train, X_test, y_test, pt_test
-    """
-    
+    return X_train, y_train, pt_train, X_test, y_test, pt_test
+    """ 
+
     return values,labels
 
-def data_preprocessing(data, columns, features_list, selected_months, is_2d, interpolation, isSimilar=False):
+def data_preprocessing(data, columns, features_list, selected_months, is_2d, interpolation, isSimilar=False, isTSNE=False):
     id_column, date_column, label_column = columns
     df = data[features_list + [label_column]]
  
@@ -141,8 +149,6 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
                               col not in [id_column, date_column, label_column]])
     #--num_column_list = ['ADAS11', 'ADAS11_bl', 'ADAS13', 'ADAS13_bl', 'AGE', 'APOE4', 'CDRSB', 'CDRSB_bl', 'Entorhinal', 'Entorhinal_bl', 'FAQ', 'FAQ_bl', 'FDG', 'FDG_bl', 'Fusiform', 'Fusiform_bl', 'Hippocampus', 'Hippocampus_bl', 'ICV', 'ICV_bl', 'MMSE', 'MMSE_bl', 'MidTemp', 'MidTemp_bl', 'RAVLT_immediate', 'RAVLT_immediate_bl', 'Ventricles', 'Ventricles_bl', 'WholeBrain', 'WholeBrain_bl']
   
-    
-    #--cat_column_list = []
     df = get_onehot_columns(df, cat_column_list)
    
     df[date_column] = df[date_column].apply(lambda x: time_dict[x])
@@ -156,7 +162,7 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
     #df = df[df[id_column].isin(valid_ids)]
 
 
-    df = df.sort_values([id_column, date_column])
+    #-n df = df.sort_values([id_column, date_column])
    
     if interpolation:
         df[[id_column, date_column] + num_column_list] = df[[id_column, date_column] + num_column_list].groupby(
@@ -170,15 +176,18 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
         df[col] = df[col].fillna(df.groupby(label_column)[col].transform('mean'))
 
 
-    mapping = {k: v for v, k in enumerate(sorted(df[id_column].unique()))}
-    df[id_column] = df[id_column].map(mapping)
-    # -already commented- diag = df.groupby(id_column).last().reset_index().query("DX in {}".format(['NL', 'Dementia', 'MCI']))[id_column].tolist()
-    # -already commented- df =  df[df[id_column].isin(diag)]
+    #mapping = {k: v for v, k in enumerate(sorted(df[id_column].unique()))}
+    #df[id_column] = df[id_column].map(mapping)
 
-    if isSimilar:
+
+    #-diag = df.groupby(id_column).last().reset_index().query("DX in {}".format(['NL', 'Dementia', 'MCI']))[id_column].tolist()
+    #-df =  df[df[id_column].isin(diag)]
+
+    if isSimilar or isTSNE:
         df = df.dropna()
   
-    return df, num_column_list, cat_column_list, mapping
+    #-n return df, num_column_list, cat_column_list, mapping
+    return df, num_column_list, cat_column_list
 
 @csrf_exempt
 def getVisits(request):
@@ -403,23 +412,28 @@ def getPatientProfile(request,id):
         #features_list = sorted(features + features_bl)
         features_list = sorted(features)
         cols = [id_column, date_column] + features_list
-        data_2d, num_column_list, cat_column_list, mapping = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=False)
-        values, labels = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=["Dementia","MCI"])
+        data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=True)
+        values, labels = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=["Dementia","MCI","Dementia to MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"])
         values = values.astype(np.float32)
 
         seed = 0
         torch.manual_seed(seed)
         device = "cuda" if torch.cuda.is_available() else "cpu"
     
-        model = torch.load('api/deneme_model.pth').to(device)
+        model = torch.load('api/deneme_model_fwobl_8_2048.pth').to(device)
         
         with torch.no_grad():
          values = torch.from_numpy(values).to(device)
          pred = model(values)
+
   
-        
-        for cat,visit in zip(pred.argmax(1).numpy(),visit_serializer.data):
-            visit.update({"category":str(cat)}) 
+
+        m = softmax(np.array(pred),axis=1)
+   
+       
+        for cat,visit,softm in zip(pred.argmax(1).numpy(),visit_serializer.data,m):
+            visit.update({"category":str(cat),"softmax":str(softm[cat])[0:4]}) 
+           
    
    
         return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"patient": patient_serializer.data,"visits":visit_serializer.data},status=200) 
@@ -427,7 +441,7 @@ def getPatientProfile(request,id):
 
 @csrf_exempt
 def getSimilarVisits(request): 
-    if request.method == 'GET': 
+    if request.method == 'POST': 
         visits = Visit.objects.all()
         visit_data = JSONParser().parse(request)  
         vlist = list(visits.values())
@@ -454,16 +468,24 @@ def getSimilarVisits(request):
 
         df = modeldata_to_float(df)
 
-        features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
+        #features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
 
-        features_list = sorted(features + features_bl)
+        #features_list = sorted(features + features_bl)
+        features_list = sorted(features)
         cols = [id_column, date_column] + features_list
-        data_2d, num_column_list, cat_column_list, mapping = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=False, isSimilar=True)
-        values,labels = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=["Dementia","MCI"])
-        values = values.astype(float)
+        data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=True)
+        values,labels = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=["Dementia","MCI","Dementia to MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"], isSimilar=True)
+        values = values.astype(np.float32)
+
+        """
+        new_data = [list(y) for y in set([tuple(x) for x in values])]   
+        print(len(values))
+        print(len(new_data))
+        """
+      
 
         mainv = values[v_index]
-
+     
         distances = []
         visits = []
         for i,v in enumerate(values):
@@ -471,24 +493,48 @@ def getSimilarVisits(request):
 
         distances.sort(key = lambda x: x[3]) 
         index = 0
+        visit_values = []
         for distance in distances:
             if distance[0] !=visit_data['PTID']:
                 visits.append(Visit.objects.get(RID=distance[2],PTID=distance[0],VISCODE=distance[1]))
                 index=index+1
+                v_index = next((index for (index, d) in enumerate(vlist) if d["RID"] == distance[2] and d['PTID'] == distance[0] and d['VISCODE'] == distance[1]), None) 
+                visit_values.append(values[v_index])
             if index==5:
                 break
-            
-        visit_serializer = VisitSerializer(visits,many=True)
+        seed = 0
+        torch.manual_seed(seed)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"visits":visit_serializer.data},status=200) 
+        
+        model = torch.load('api/deneme_model_fwobl_8_2048.pth').to(device)
+
+        with torch.no_grad():
+         values = torch.from_numpy(np.asarray(visit_values)).to(device)
+         pred = model(values)
+
+        m = softmax(np.array(pred),axis=1)     
+
+        visits_serializer = VisitSerializer(visits,many=True)
+        visit = Visit.objects.get(RID=visit_data['RID'],PTID=visit_data['PTID'],VISCODE=visit_data['VISCODE'])
+        visit_serializer = VisitSerializer(visit)  
+
+        for cat,v,s in zip(pred.argmax(1).numpy(),visits_serializer.data,m):
+            v.update({"category":str(cat),"softmax":str(s[cat])[0:4]})
+            
+        
+
+
+        return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"visit":visit_serializer.data,"visits":visits_serializer.data},status=200) 
 
 @csrf_exempt
 def getTSNE(request): 
-    if request.method == 'GET': 
-
+    if request.method == 'GET':       
+           
         if TSNEImg.objects.first() is not None and TSNEImg.objects.first().isUpdated is True:
             tsne_serializer = TSNESerializer(TSNEImg.objects.first())
             return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"tsne": tsne_serializer.data},status=200) 
+        
 
         visits = Visit.objects.all() 
         vlist = list(visits.values())
@@ -512,6 +558,7 @@ def getTSNE(request):
         'Fusiform','ICV',
         'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]
 
+
         df = modeldata_to_float(df)
 
         #features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
@@ -519,8 +566,8 @@ def getTSNE(request):
         #features_list = sorted(features + features_bl)
         features_list = sorted(features)
         cols = [id_column, date_column] + features_list
-        data_2d, num_column_list, cat_column_list, mapping = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=False)
-        values,labels = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=["Dementia","MCI"],isTSNE=True)
+        data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=False)
+        values,labels = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=["Dementia","MCI","Dementia to MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"],isTSNE=True)
         values = values.astype(np.float32)
 
         seed = 0
@@ -528,34 +575,45 @@ def getTSNE(request):
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
         
-        model = torch.load('api/deneme_model.pth').to(device)
+        model = torch.load('api/deneme_model_fwobl_8_2048.pth').to(device)
 
         with torch.no_grad():
          values = torch.from_numpy(values).to(device)
          pred = model(values)   
-         
-        
+
+       
+        """
+        u, indices = np.unique(pred.argmax(1).numpy(), return_index=True)
+        print("uniqueler")
+        print(u)
+        """
+
         n_components = 2
         tsne = TSNE(n_components)
         tsne_result = tsne.fit_transform(values)
         tsne_result_df = pd.DataFrame({'tsne_1': tsne_result[:,0], 'tsne_2': tsne_result[:,1], 'label': pred.argmax(1).numpy()})
         fig, ax = plt.subplots(1)
         plt.figure(1)
+        plt.xticks([-100,-90,-80,-70,-60,-50,-40,-30,-20,-10,0,10,20,30,40,50,60,70,80,90,100]) 
+        plt.yticks([-100,-90,-80,-70,-60,-50,-40,-30,-20,-10,0,10,20,30,40,50,60,70,80,90,100]) 
+        fig.set_size_inches(9.2, 9.2)
         sns.scatterplot(x='tsne_1', y='tsne_2', hue='label', data=tsne_result_df, ax=ax,s=60)
+        sns.set(rc={'figure.figsize':(20,5)})
         lim = (tsne_result.min()-5, tsne_result.max()+5)
         ax.set_xlim(lim)
         ax.set_ylim(lim)
         ax.set_aspect('equal')
+        ax.set_adjustable("datalim")
         ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
-        plt.savefig("deneme3.png", dpi=300, bbox_inches='tight', s=50, format="png") 
+        plt.savefig("deneme3.png", dpi=600, bbox_inches='tight', s=50, format="png") 
 
+        with open("deneme3.png","rb") as imagefile:
+            byteform = base64.b64encode(imagefile.read())
 
         if TSNEImg.objects.first() is None:            
-            with open("deneme3.png","rb") as imagefile:
-                byteform = base64.b64encode(imagefile.read())
-                TSNEImg.objects.create(ID="1",isUpdated=True, ImageBytes=byteform)
+            TSNEImg.objects.create(ID="1",isUpdated=True, ImageBytes=byteform)
         else:
-            TSNEImg.objects.filter(ID="1").update(isUpdated=True)        
+            TSNEImg.objects.filter(ID="1").update(isUpdated=True, ImageBytes=byteform)        
 
         tsne_serializer = TSNESerializer(TSNEImg.objects.first())
 
