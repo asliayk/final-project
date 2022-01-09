@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import Doctor, Patient, Visit, TSNEImg
+from api.models import Doctor, Patient, Visit, TSNEImg, AgeGraphsImg, SelectedModel
 
 class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,7 +30,17 @@ class VisitSerializer(serializers.ModelSerializer):
 class TSNESerializer(serializers.ModelSerializer):
     class Meta:
         model=TSNEImg
-        fields=('ID', 'ImageBytes','isUpdated')            
+        fields=('ID', 'ImageBytes','isUpdated')  
+
+class AgeGraphsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=AgeGraphsImg
+        fields=('ID', 'ImageBytes','isUpdated') 
+
+class SelectedModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=SelectedModel
+        fields=('ID','ClassNum')         
 
     
 

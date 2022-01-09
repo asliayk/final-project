@@ -7,13 +7,10 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from django.http.response import JsonResponse
-from django.db.models import DateField
-from django.core.files import File as DjangoFile
-from django.conf import settings
-from django.conf.urls.static import static
+from django.db.models import Q
 
-from api.models import Doctor, Patient, Visit, TSNEImg
-from api.serializers import DoctorSerializer, PatientSerializer, VisitSerializer, TSNESerializer
+from api.models import Doctor, Patient, Visit, TSNEImg, AgeGraphsImg, SelectedModel
+from api.serializers import DoctorSerializer, PatientSerializer, VisitSerializer, TSNESerializer, AgeGraphsSerializer, SelectedModelSerializer
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -38,44 +35,26 @@ from torch import nn
 from django.db.models import Count
 from django.db.models.functions import Cast
 import math
-import json
+import time
 from scipy.special import softmax
 
 
 # Create your views here.
+def timestamped_name(num):
+    postfix = str(num) + "img.png"     
+    timestamp = str(int(time.time()*10000000))
+    img_name = timestamp + postfix
+    return img_name
+
 def modeldata_to_float(df):
 
-    df['AGE'] = pd.to_numeric(df["AGE"], downcast="float")
-    df['ADAS11'] = pd.to_numeric(df["ADAS11"], downcast="float")
-    df['ADAS11_bl'] = pd.to_numeric(df["ADAS11_bl"], downcast="float")
-    df['ADAS13'] = pd.to_numeric(df["ADAS13"], downcast="float")
-    df['ADAS13_bl'] = pd.to_numeric(df["ADAS13_bl"], downcast="float")
-    df['APOE4'] = pd.to_numeric(df["APOE4"], downcast="float")
-    df['CDRSB'] = pd.to_numeric(df["CDRSB"], downcast="float")
-    df['CDRSB_bl'] = pd.to_numeric(df["CDRSB_bl"], downcast="float")
-    df['Entorhinal'] = pd.to_numeric(df["Entorhinal"], downcast="float")
-    df['Entorhinal_bl'] = pd.to_numeric(df["Entorhinal_bl"], downcast="float")
-    df['FAQ'] = pd.to_numeric(df["FAQ"], downcast="float")
-    df['FAQ_bl'] = pd.to_numeric(df["FAQ_bl"], downcast="float")
-    df['FDG'] = pd.to_numeric(df["FDG"], downcast="float")
-    df['FDG_bl'] = pd.to_numeric(df["FDG_bl"], downcast="float")
-    df['Fusiform'] = pd.to_numeric(df["Fusiform"], downcast="float")
-    df['Fusiform_bl'] = pd.to_numeric(df["Fusiform_bl"], downcast="float")
-    df['Hippocampus'] = pd.to_numeric(df["Hippocampus"], downcast="float")
-    df['Hippocampus_bl'] = pd.to_numeric(df["Hippocampus_bl"], downcast="float")
-    df['ICV'] = pd.to_numeric(df["ICV"], downcast="float")
-    df['ICV_bl'] = pd.to_numeric(df["ICV_bl"], downcast="float")
-    df['MMSE'] = pd.to_numeric(df["MMSE"], downcast="float")
-    df['MMSE_bl'] = pd.to_numeric(df["MMSE_bl"], downcast="float")
-    df['MidTemp'] = pd.to_numeric(df["MidTemp"], downcast="float")
-    df['MidTemp_bl'] = pd.to_numeric(df["MidTemp_bl"], downcast="float")
-    df['RAVLT_immediate'] = pd.to_numeric(df["RAVLT_immediate"], downcast="float")
-    df['RAVLT_immediate_bl'] = pd.to_numeric(df["RAVLT_immediate_bl"], downcast="float")
-    df['MMSE_bl'] = pd.to_numeric(df["MMSE_bl"], downcast="float")
-    df['Ventricles'] = pd.to_numeric(df["Ventricles"], downcast="float")
-    df['Ventricles_bl'] = pd.to_numeric(df["Ventricles_bl"], downcast="float")
-    df['WholeBrain'] = pd.to_numeric(df["WholeBrain"], downcast="float")
-    df['WholeBrain_bl'] = pd.to_numeric(df["WholeBrain_bl"], downcast="float")
+    feature_list = ['AGE','ADAS11','ADAS11_bl','ADAS13','ADAS13_bl','APOE4','CDRSB','CDRSB_bl','Entorhinal',
+    'Entorhinal_bl','FAQ','FAQ_bl','FDG','FDG_bl','Fusiform','Fusiform_bl','Hippocampus','Hippocampus_bl',
+    'ICV','ICV_bl','MMSE','MMSE_bl','MidTemp','MidTemp_bl','RAVLT_immediate','RAVLT_learning','RAVLT_forgetting',
+    'RAVLT_perc_forgetting','RAVLT_immediate_bl','MMSE_bl','Ventricles','Ventricles_bl','WholeBrain','WholeBrain_bl']
+
+    for feature in feature_list:
+        df[feature] = pd.to_numeric(df[feature], downcast="float")
     
     return df
 
@@ -133,7 +112,7 @@ def prepare_model_data_2d(dat, test_ratio, pad_value, num_column_list, target_co
     return X_train, y_train, pt_train, X_test, y_test, pt_test
     """ 
 
-    return values,labels
+    return values
 
 def data_preprocessing(data, columns, features_list, selected_months, is_2d, interpolation, isSimilar=False, isTSNE=False):
     id_column, date_column, label_column = columns
@@ -237,14 +216,200 @@ def getStatistics(request):
             elif item["PTRACCAT"]=='Am Indian/Alaskan':
                 AmIndianAlaskanPercentage_race = str(float("{:.2f}".format((item["PTRACCAT__count"]/total)*100)))     
             elif item["PTRACCAT"]=='Hawaiian/Other PI':
-                HawaiianPercentage_race = str(float("{:.2f}".format((item["PTRACCAT__count"]/total)*100)))     
+                HawaiianPercentage_race = str(float("{:.2f}".format((item["PTRACCAT__count"]/total)*100)))   
+
+        qNL = list(Patient.objects.filter(DX="NL").values('PTMARRY').order_by().annotate(Count('PTMARRY')))
+        total = len(list(Patient.objects.filter(DX="NL")))
+        for item in qNL:
+            if item["PTMARRY"]=='Never married':
+                NL_NeverMarried = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))
+            elif item["PTMARRY"]=='Married':
+                NL_Married = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))  
+            elif item["PTMARRY"]=='Widowed':
+                NL_Widowed = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))     
+            elif item["PTMARRY"]=='Divorced':
+                NL_Divorced = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))   
+
+        qMCI = list(Patient.objects.filter(DX="MCI").values('PTMARRY').order_by().annotate(Count('PTMARRY')))
+        total = len(list(Patient.objects.filter(DX="MCI")))
+        for item in qMCI:
+            if item["PTMARRY"]=='Never married':
+                MCI_NeverMarried = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))
+            elif item["PTMARRY"]=='Married':
+                MCI_Married = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))  
+            elif item["PTMARRY"]=='Widowed':
+                MCI_Widowed = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))     
+            elif item["PTMARRY"]=='Divorced':
+                MCI_Divorced = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100))) 
+
+        qDementia = list(Patient.objects.filter(DX="Dementia").values('PTMARRY').order_by().annotate(Count('PTMARRY')))
+        total = len(list(Patient.objects.filter(DX="Dementia")))
+        for item in qDementia:
+            if item["PTMARRY"]=='Never married':
+                Dementia_NeverMarried = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))
+            elif item["PTMARRY"]=='Married':
+                Dementia_Married = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))  
+            elif item["PTMARRY"]=='Widowed':
+                Dementia_Widowed = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))     
+            elif item["PTMARRY"]=='Divorced':
+                Dementia_Divorced = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100))) 
+
+        qMCItoNL = list(Patient.objects.filter(DX="MCI to NL").values('PTMARRY').order_by().annotate(Count('PTMARRY')))
+        total = len(list(Patient.objects.filter(DX="MCI to NL")))
+        MCItoNL_NeverMarried = str(0)
+        MCItoNL_Married = str(0)
+        MCItoNL_Widowed = str(0)
+        MCItoNL_Divorced = str(0)
+        for item in qMCItoNL:
+            if item["PTMARRY"]=='Never married':
+                MCItoNL_NeverMarried = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))
+            elif item["PTMARRY"]=='Married':
+                MCItoNL_Married = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))  
+            elif item["PTMARRY"]=='Widowed':
+                MCItoNL_Widowed = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))     
+            elif item["PTMARRY"]=='Divorced':
+                MCItoNL_Divorced = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100))) 
+
+        qMCItoDementia = list(Patient.objects.filter(DX="MCI to Dementia").values('PTMARRY').order_by().annotate(Count('PTMARRY')))
+        total = len(list(Patient.objects.filter(DX="MCI to Dementia")))
+        MCItoDementia_NeverMarried = str(0)
+        MCItoDementia_Married = str(0)
+        MCItoDementia_Widowed = str(0)
+        MCItoDementia_Divorced = str(0)
+        for item in qMCItoDementia:
+            if item["PTMARRY"]=='Never married':
+                MCItoDementia_NeverMarried = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))
+            elif item["PTMARRY"]=='Married':
+                MCItoDementia_Married = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))  
+            elif item["PTMARRY"]=='Widowed':
+                MCItoDementia_Widowed = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))     
+            elif item["PTMARRY"]=='Divorced':
+                MCItoDementia_Divorced = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100))) 
+
+        qNLtoMCI = list(Patient.objects.filter(DX="NL to MCI").values('PTMARRY').order_by().annotate(Count('PTMARRY')))
+        total = len(list(Patient.objects.filter(DX="NL to MCI")))
+        NLtoMCI_NeverMarried = str(0)
+        NLtoMCI_Married = str(0)
+        NLtoMCI_Widowed = str(0)
+        NLtoMCI_Divorced = str(0)
+        for item in qNLtoMCI:
+            if item["PTMARRY"]=='Never married':
+                NLtoMCI_NeverMarried = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))
+            elif item["PTMARRY"]=='Married':
+                NLtoMCI_Married = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))  
+            elif item["PTMARRY"]=='Widowed':
+                NLtoMCI_Widowed = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))     
+            elif item["PTMARRY"]=='Divorced':
+                NLtoMCI_Divorced = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100))) 
+
+        qDementiatoMCI = list(Patient.objects.filter(DX="Dementia to MCI").values('PTMARRY').order_by().annotate(Count('PTMARRY')))
+        total = len(list(Patient.objects.filter(DX="Dementia to MCI")))
+        DementiatoMCI_NeverMarried = str(0)
+        DementiatoMCI_Married = str(0)
+        DementiatoMCI_Widowed = str(0)
+        DementiatoMCI_Divorced = str(0)
+        for item in qDementiatoMCI:
+            if item["PTMARRY"]=='Never married':
+                DementiatoMCI_NeverMarried = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))
+            elif item["PTMARRY"]=='Married':
+                DementiatoMCI_Married = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))  
+            elif item["PTMARRY"]=='Widowed':
+                DementiatoMCI_Widowed = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))     
+            elif item["PTMARRY"]=='Divorced':
+                DementiatoMCI_Divorced = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100))) 
+
+        qNLtoDementia = list(Patient.objects.filter(DX="NL to Dementia").values('PTMARRY').order_by().annotate(Count('PTMARRY'))) 
+        total = len(list(Patient.objects.filter(DX="NL to Dementia")))
+        NLtoDementia_NeverMarried = str(0)
+        NLtoDementia_Married = str(0)
+        NLtoDementia_Widowed = str(0)
+        NLtoDementia_Divorced = str(0)
+        for item in qNLtoDementia:
+            if item["PTMARRY"]=='Never married':
+                NLtoDementia_NeverMarried = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))
+            elif item["PTMARRY"]=='Married':
+                NLtoDementia_Married = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))  
+            elif item["PTMARRY"]=='Widowed':
+                NLtoDementia_Widowed = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))     
+            elif item["PTMARRY"]=='Divorced':
+                NLtoDementia_Divorced = str(float("{:.2f}".format((item["PTMARRY__count"]/total)*100)))  
+      
+
+        qFemaleLabels = list(Patient.objects.filter(PTGENDER="Female").values('DX').order_by().annotate(Count('DX')))
+        total = len(list(Patient.objects.filter(~Q(DX=""),~Q(DX=None),PTGENDER="Female")))
+        Female_MCI = str(0)
+        Female_NL = str(0)
+        Female_Dementia = str(0)
+        Female_NLtoMCI = str(0)
+        Female_MCItoDementia = str(0)
+        Female_MCItoNL = str(0)
+        Female_DementiatoMCI = str(0)
+        Female_NLtoDementia = str(0)
+        for item in qFemaleLabels:
+            if item["DX"]=='MCI':
+                Female_MCI = str(float("{:.2f}".format((item["DX__count"]/total)*100)))
+            elif item["DX"]=='NL':
+                Female_NL = str(float("{:.2f}".format((item["DX__count"]/total)*100)))  
+            elif item["DX"]=='Dementia':
+                Female_Dementia = str(float("{:.2f}".format((item["DX__count"]/total)*100)))     
+            elif item["DX"]=='NL to MCI':
+                Female_NLtoMCI = str(float("{:.2f}".format((item["DX__count"]/total)*100)))
+            elif item["DX"]=='MCI to Dementia':
+                Female_MCItoDementia = str(float("{:.2f}".format((item["DX__count"]/total)*100)))
+            elif item["DX"]=='MCI to NL':
+                Female_MCItoNL = str(float("{:.2f}".format((item["DX__count"]/total)*100))) 
+            elif item["DX"]=='Dementia to MCI':
+                Female_DementiatoMCI = str(float("{:.2f}".format((item["DX__count"]/total)*100)))   
+            elif item["DX"]=='NL to Dementia':
+                Female_NLtoDementia = str(float("{:.2f}".format((item["DX__count"]/total)*100)))             
+
+
+        qMaleLabels = list(Patient.objects.filter(PTGENDER="Male").values('DX').order_by().annotate(Count('DX'))) 
+        total = len(list(Patient.objects.filter(~Q(DX=""),~Q(DX=None),PTGENDER="Male")))
+        Male_MCI = str(0)
+        Male_NL = str(0)
+        Male_Dementia = str(0)
+        Male_NLtoMCI = str(0)
+        Male_MCItoDementia = str(0)
+        Male_MCItoNL = str(0)
+        Male_DementiatoMCI = str(0)
+        Male_NLtoDementia = str(0)
+        for item in qMaleLabels:
+            if item["DX"]=='MCI':
+                Male_MCI = str(float("{:.2f}".format((item["DX__count"]/total)*100)))
+            elif item["DX"]=='NL':
+                Male_NL = str(float("{:.2f}".format((item["DX__count"]/total)*100)))  
+            elif item["DX"]=='Dementia':
+                Male_Dementia = str(float("{:.2f}".format((item["DX__count"]/total)*100)))     
+            elif item["DX"]=='NL to MCI':
+                Male_NLtoMCI = str(float("{:.2f}".format((item["DX__count"]/total)*100)))
+            elif item["DX"]=='MCI to Dementia':
+                Male_MCItoDementia = str(float("{:.2f}".format((item["DX__count"]/total)*100)))
+            elif item["DX"]=='MCI to NL':
+                Male_MCItoNL = str(float("{:.2f}".format((item["DX__count"]/total)*100))) 
+            elif item["DX"]=='Dementia to MCI':
+                Male_DementiatoMCI = str(float("{:.2f}".format((item["DX__count"]/total)*100)))   
+            elif item["DX"]=='NL to Dementia':
+                Female_NLtoDementia = str(float("{:.2f}".format((item["DX__count"]/total)*100)))                     
   
 
         statistics = {"AvgAge": "67.10", "FemalePercentage": FemalePercentage, "MarriedPercentage_m": MarriedPercentage_m,
         "WidowedPercentage_m": WidowedPercentage_m, "NeverMarriedPercentage_m": NeverMarriedPercentage_m, "DivorcedPercentage_m": DivorcedPercentage_m,
         "UnknownPercentage_m": UnknownPercentage_m, "WhitePercentage_race": WhitePercentage_race, "BlackPercentage_race": BlackPercentage_race,
         "AsianPercentage_race": AsianPercentage_race, "UnknownPercentage_race": UnknownPercentage_race, "AmIndianAlaskanPercentage_race": AmIndianAlaskanPercentage_race,
-        "MoreThanOnePercentage_race": MoreThanOnePercentage_race, "HawaiianPercentage_race": HawaiianPercentage_race}
+        "MoreThanOnePercentage_race": MoreThanOnePercentage_race, "HawaiianPercentage_race": HawaiianPercentage_race,
+        "NL_NeverMarried": NL_NeverMarried, "NL_Married": NL_Married, "NL_Widowed": NL_Widowed, "NL_Divorced": NL_Divorced,
+        "MCI_NeverMarried": MCI_NeverMarried, "MCI_Married": MCI_Married, "MCI_Widowed": MCI_Widowed, "MCI_Divorced": MCI_Divorced,
+        "Dementia_NeverMarried": Dementia_NeverMarried, "Dementia_Married": Dementia_Married, "Dementia_Widowed": Dementia_Widowed, "Dementia_Divorced": Dementia_Divorced,
+        "MCItoNL_NeverMarried": MCItoNL_NeverMarried, "MCItoNL_Married": MCItoNL_Married, "MCItoNL_Widowed": MCItoNL_Widowed, "MCItoNL_Divorced": MCItoNL_Divorced,
+        "MCItoDementia_NeverMarried": MCItoDementia_NeverMarried, "MCItoDementia_Married": MCItoDementia_Married, "MCItoDementia_Widowed": MCItoDementia_Widowed, "MCItoDementia_Divorced": MCItoDementia_Divorced,
+        "NLtoMCI_NeverMarried": NLtoMCI_NeverMarried, "NLtoMCI_Married": NLtoMCI_Married, "NLtoMCI_Widowed": NLtoMCI_Widowed, "NLtoMCI_Divorced": NLtoMCI_Divorced,
+        "DementiatoMCI_NeverMarried": DementiatoMCI_NeverMarried, "DementiatoMCI_Married": DementiatoMCI_Married, "DementiatoMCI_Widowed": DementiatoMCI_Widowed, "DementiatoMCI_Divorced": DementiatoMCI_Divorced,
+        "NLtoDementia_NeverMarried": NLtoDementia_NeverMarried, "NLtoDementia_Married": NLtoDementia_Married, "NLtoDementia_Widowed": NLtoDementia_Widowed, "NLtoDementia_Divorced": NLtoDementia_Divorced,
+        "Female_MCI": Female_MCI, "Female_NL": Female_NL, "Female_Dementia": Female_Dementia,"FemaleNLtoMCI": Female_NLtoMCI, "FemaleMCItoDementia": Female_MCItoDementia, "Female_MCItoNL": Female_MCItoNL, "Female_DementiatoMCI": Female_DementiatoMCI, "Female_NLtoDementia": Female_NLtoDementia,
+        "Male_MCI": Male_MCI, "Male_NL": Male_NL, "Male_Dementia": Male_Dementia,"MaleNLtoMCI": Male_NLtoMCI,"MaleMCItoDementia": Male_MCItoDementia, "Male_MCItoNL": Male_MCItoNL, "Male_DementiatoMCI": Male_DementiatoMCI, "Male_NLtoDementia": Male_NLtoDementia
+        
+        }
 
         slist = []
         slist.append(statistics)
@@ -282,6 +447,8 @@ def addPatient(request):
         patient_serializer = PatientSerializer(data=patient_data)
         if patient_serializer.is_valid():
             patient_serializer.save()
+            if AgeGraphsImg.objects.filter(isUpdated=True) is not None:
+                AgeGraphsImg.objects.filter(ID="1").update(isUpdated=False)
             return JsonResponse({"status": {"success": True, "message": "Patient is added successfully"}, "pid":patient_serializer.data['PTID']},status=200)  
         return JsonResponse({"status": {"success": False, "message": "Patient couldn't be added"}},status=400)  
 
@@ -322,7 +489,20 @@ def updateDoctor(request):
         if doctor_serializer.is_valid():
             doctor_serializer.save()
             return JsonResponse({"status": {"success": True,"message": "Updated successfully"}},status=200)
-        return JsonResponse({"status": {"success": False,"message": "Update unsuccessful"}},status=400)    
+        return JsonResponse({"status": {"success": False,"message": "Update unsuccessful"}},status=400)   
+
+@csrf_exempt
+def selectModel(request):  
+    if request.method == 'PUT':
+        model_data = JSONParser().parse(request)
+        model = SelectedModel.objects.get(ID=model_data["ID"])
+        model_serializer = SelectedModelSerializer(model,data=model_data)
+        if model_serializer.is_valid():
+            model_serializer.save()
+            if TSNEImg.objects.filter(isUpdated=True) is not None:
+                TSNEImg.objects.filter(ID="1").update(isUpdated=False)
+            return JsonResponse({"status": {"success": True,"message": "Updated successfully"}},status=200)
+        return JsonResponse({"status": {"success": False,"message": "Update unsuccessful"}},status=400)           
 
 @csrf_exempt
 def updatePatient(request):  
@@ -332,6 +512,8 @@ def updatePatient(request):
         patient_serializer = PatientSerializer(patient,data=patient_data)
         if patient_serializer.is_valid():
             patient_serializer.save()
+            if AgeGraphsImg.objects.filter(isUpdated=True) is not None:
+                AgeGraphsImg.objects.filter(ID="1").update(isUpdated=False)
             return JsonResponse({"status": {"success": True,"message": "Updated successfully"}},status=200) 
         return JsonResponse({"status": {"success": False,"message": "Update unsuccessful"}},status=400)          
 
@@ -351,6 +533,8 @@ def deletePatient(request):
         patient.delete()
         visits = Visit.objects.filter(PTID=patient_data["PTID"])
         visits.delete()
+        if AgeGraphsImg.objects.filter(isUpdated=True) is not None:
+            AgeGraphsImg.objects.filter(ID="1").update(isUpdated=False)
         return JsonResponse({"status": {"success": True,"message": "successfully deleted"}},status=200)    
 
 @csrf_exempt
@@ -379,6 +563,38 @@ def getPatientProfile(request,id):
     if request.method == 'GET': 
         if Patient.objects.filter(PTID=id).first() is None:
             return JsonResponse({"status": {"success": False,"message": "There is no patient with that id"}},status=400)
+
+        features = ['RAVLT_immediate','ADAS11','ADAS13','MMSE',
+        'Hippocampus',
+        'WholeBrain',
+        'FDG',
+        'MidTemp',
+        'Entorhinal',
+        'Fusiform','ICV',
+        'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]    
+
+        selected_model = SelectedModel.objects.first().ClassNum
+        if selected_model=="8":
+            model_path='api/deneme_model_fwobl_8_2048.pth'
+            s_labels = ["Dementia","Dementia to MCI","MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"]
+            print("sekizde")
+        elif selected_model=="2":
+            model_path='api/deneme_model_upf_2.pth'
+            s_labels = ["Dementia","MCI"]
+            print("ikide")
+        elif selected_model=="3":
+            model_path='api/deneme_model_upf_3.pth'
+            s_labels = ["Dementia","MCI","NL"]
+            print("üçte")
+        else:
+            model_path='api/deneme_model_upf_4.pth'
+            s_labels = ["Dementia","MCI to Dementia","NL","NL to MCI"]  
+            print("dörtte")
+
+        if selected_model!="8":
+            features = ['AGE', 'APOE4', 'CDRSB', 'ADAS11', 'ADAS13', 'MMSE', 'RAVLT_immediate', 'RAVLT_learning', 'RAVLT_forgetting', 'RAVLT_perc_forgetting', 'FAQ', 'Ventricles', 'Hippocampus',
+            'WholeBrain', 'Entorhinal', 'Fusiform', 'MidTemp', 'ICV']   
+    
         patient = Patient.objects.filter(PTID=id).first()
         patient_serializer = PatientSerializer(patient)
         
@@ -396,14 +612,7 @@ def getPatientProfile(request,id):
         pad_value = 10**5
         selected_months = [0, 6, 12, 18, 24]
         
-        features = ['RAVLT_immediate','ADAS11','ADAS13','MMSE',
-        'Hippocampus',
-        'WholeBrain',
-        'FDG',
-        'MidTemp',
-        'Entorhinal',
-        'Fusiform','ICV',
-        'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]
+        
 
         df = modeldata_to_float(df)
 
@@ -412,15 +621,15 @@ def getPatientProfile(request,id):
         #features_list = sorted(features + features_bl)
         features_list = sorted(features)
         cols = [id_column, date_column] + features_list
-        data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=True)
-        values, labels = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=["Dementia","MCI","Dementia to MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"])
+        data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=False)
+        values = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=s_labels)     
         values = values.astype(np.float32)
 
         seed = 0
         torch.manual_seed(seed)
         device = "cuda" if torch.cuda.is_available() else "cpu"
     
-        model = torch.load('api/deneme_model_fwobl_8_2048.pth').to(device)
+        model = torch.load(model_path).to(device)
         
         with torch.no_grad():
          values = torch.from_numpy(values).to(device)
@@ -430,9 +639,8 @@ def getPatientProfile(request,id):
 
         m = softmax(np.array(pred),axis=1)
    
-       
         for cat,visit,softm in zip(pred.argmax(1).numpy(),visit_serializer.data,m):
-            visit.update({"category":str(cat),"softmax":str(softm[cat])[0:4]}) 
+            visit.update({"category":str(s_labels[cat]),"softmax":str(softm[cat])[0:4]}) 
            
    
    
@@ -464,7 +672,29 @@ def getSimilarVisits(request):
         'MidTemp',
         'Entorhinal',
         'Fusiform','ICV',
-        'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]
+        'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]    
+
+        selected_model = SelectedModel.objects.first().ClassNum
+        if selected_model=="8":
+            model_path='api/deneme_model_fwobl_8_2048.pth'
+            s_labels = ["Dementia","Dementia to MCI","MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"]
+            print("sekizde")
+        elif selected_model=="2":
+            model_path='api/deneme_model_upf_2.pth'
+            s_labels = ["Dementia","MCI"]
+            print("ikide")
+        elif selected_model=="3":
+            model_path='api/deneme_model_upf_3.pth'
+            s_labels = ["Dementia","MCI","NL"]
+            print("üçte")
+        else:
+            model_path='api/deneme_model_upf_4.pth'
+            s_labels = ["Dementia","MCI to Dementia","NL","NL to MCI"]  
+            print("dörtte")
+
+        if selected_model!="8":
+            features = ['AGE', 'APOE4', 'CDRSB', 'ADAS11', 'ADAS13', 'MMSE', 'RAVLT_immediate', 'RAVLT_learning', 'RAVLT_forgetting', 'RAVLT_perc_forgetting', 'FAQ', 'Ventricles', 'Hippocampus',
+            'WholeBrain', 'Entorhinal', 'Fusiform', 'MidTemp', 'ICV']
 
         df = modeldata_to_float(df)
 
@@ -474,7 +704,7 @@ def getSimilarVisits(request):
         features_list = sorted(features)
         cols = [id_column, date_column] + features_list
         data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=True)
-        values,labels = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=["Dementia","MCI","Dementia to MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"], isSimilar=True)
+        values = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=s_labels, isSimilar=True)
         values = values.astype(np.float32)
 
         """
@@ -507,7 +737,7 @@ def getSimilarVisits(request):
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
         
-        model = torch.load('api/deneme_model_fwobl_8_2048.pth').to(device)
+        model = torch.load(model_path).to(device)
 
         with torch.no_grad():
          values = torch.from_numpy(np.asarray(visit_values)).to(device)
@@ -520,21 +750,20 @@ def getSimilarVisits(request):
         visit_serializer = VisitSerializer(visit)  
 
         for cat,v,s in zip(pred.argmax(1).numpy(),visits_serializer.data,m):
-            v.update({"category":str(cat),"softmax":str(s[cat])[0:4]})
+            v.update({"category":str(s_labels[cat]),"softmax":str(s[cat])[0:4]})
             
-        
-
+      
 
         return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"visit":visit_serializer.data,"visits":visits_serializer.data},status=200) 
 
 @csrf_exempt
 def getTSNE(request): 
     if request.method == 'GET':       
-           
+          
         if TSNEImg.objects.first() is not None and TSNEImg.objects.first().isUpdated is True:
             tsne_serializer = TSNESerializer(TSNEImg.objects.first())
             return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"tsne": tsne_serializer.data},status=200) 
-        
+         
 
         visits = Visit.objects.all() 
         vlist = list(visits.values())
@@ -556,7 +785,29 @@ def getTSNE(request):
         'MidTemp',
         'Entorhinal',
         'Fusiform','ICV',
-        'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]
+        'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]    
+
+        selected_model = SelectedModel.objects.first().ClassNum
+        if selected_model=="8":
+            model_path='api/deneme_model_fwobl_8_2048.pth'
+            s_labels = ["Dementia","Dementia to MCI","MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"]
+            print("sekizde")
+        elif selected_model=="2":
+            model_path='api/deneme_model_upf_2.pth'
+            s_labels = ["Dementia","MCI"]
+            print("ikide")
+        elif selected_model=="3":
+            model_path='api/deneme_model_upf_3.pth'
+            s_labels = ["Dementia","MCI","NL"]
+            print("üçte")
+        else:
+            model_path='api/deneme_model_upf_4.pth'
+            s_labels = ["Dementia","MCI to Dementia","NL","NL to MCI"]  
+            print("dörtte")
+
+        if selected_model!="8":
+            features = ['AGE', 'APOE4', 'CDRSB', 'ADAS11', 'ADAS13', 'MMSE', 'RAVLT_immediate', 'RAVLT_learning', 'RAVLT_forgetting', 'RAVLT_perc_forgetting', 'FAQ', 'Ventricles', 'Hippocampus',
+            'WholeBrain', 'Entorhinal', 'Fusiform', 'MidTemp', 'ICV']
 
 
         df = modeldata_to_float(df)
@@ -567,7 +818,7 @@ def getTSNE(request):
         features_list = sorted(features)
         cols = [id_column, date_column] + features_list
         data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=False)
-        values,labels = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=["Dementia","MCI","Dementia to MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"],isTSNE=True)
+        values = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=s_labels,isTSNE=True)
         values = values.astype(np.float32)
 
         seed = 0
@@ -575,7 +826,7 @@ def getTSNE(request):
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
         
-        model = torch.load('api/deneme_model_fwobl_8_2048.pth').to(device)
+        model = torch.load(model_path).to(device)
 
         with torch.no_grad():
          values = torch.from_numpy(values).to(device)
@@ -587,30 +838,42 @@ def getTSNE(request):
         print("uniqueler")
         print(u)
         """
+        
 
         n_components = 2
         tsne = TSNE(n_components)
         tsne_result = tsne.fit_transform(values)
-        tsne_result_df = pd.DataFrame({'tsne_1': tsne_result[:,0], 'tsne_2': tsne_result[:,1], 'label': pred.argmax(1).numpy()})
+        
+        label_names_tsne = []
+        for res in pred.argmax(1).numpy():
+            label_names_tsne.append(s_labels[res])
+
+
+        tsne_result_df = pd.DataFrame({'tsne_1': tsne_result[:,0], 'tsne_2': tsne_result[:,1], 'label': label_names_tsne})
         fig, ax = plt.subplots(1)
         plt.figure(1)
-        plt.xticks([-100,-90,-80,-70,-60,-50,-40,-30,-20,-10,0,10,20,30,40,50,60,70,80,90,100]) 
-        plt.yticks([-100,-90,-80,-70,-60,-50,-40,-30,-20,-10,0,10,20,30,40,50,60,70,80,90,100]) 
-        fig.set_size_inches(9.2, 9.2)
+        plt.xticks([i for i in range(-100, 105, 5)])
+        plt.yticks([i for i in range(-100, 105, 5)])
+        #fig.set_size_inches(9.2, 9.2)
+        fig.set_size_inches(13,13)
         sns.scatterplot(x='tsne_1', y='tsne_2', hue='label', data=tsne_result_df, ax=ax,s=60)
-        sns.set(rc={'figure.figsize':(20,5)})
+        #sns.set(rc={'figure.figsize':(20,5)})
+        sns.set(rc={'figure.figsize':(30,5)})
         lim = (tsne_result.min()-5, tsne_result.max()+5)
         ax.set_xlim(lim)
         ax.set_ylim(lim)
         ax.set_aspect('equal')
         ax.set_adjustable("datalim")
         ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0)
-        plt.savefig("deneme3.png", dpi=600, bbox_inches='tight', s=50, format="png") 
+        img_name = timestamped_name(selected_model)
+        plt.savefig(img_name, dpi=600, bbox_inches='tight', s=50, format="png") 
+        plt.close()
+ 
 
-        with open("deneme3.png","rb") as imagefile:
+        with open(img_name,"rb") as imagefile:
             byteform = base64.b64encode(imagefile.read())
 
-        if TSNEImg.objects.first() is None:            
+        if TSNEImg.objects.first() is None:          
             TSNEImg.objects.create(ID="1",isUpdated=True, ImageBytes=byteform)
         else:
             TSNEImg.objects.filter(ID="1").update(isUpdated=True, ImageBytes=byteform)        
@@ -618,6 +881,104 @@ def getTSNE(request):
         tsne_serializer = TSNESerializer(TSNEImg.objects.first())
 
         return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"tsne": tsne_serializer.data},status=200) 
+
+@csrf_exempt
+def getAgeGraphs(request): 
+    if request.method == 'GET': 
+
+        if AgeGraphsImg.objects.first() is not None and AgeGraphsImg.objects.first().isUpdated is True:
+            agegraphs_serializer = AgeGraphsSerializer(AgeGraphsImg.objects.first())
+            return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"graph": agegraphs_serializer.data},status=200) 
+
+        visits = Visit.objects.all() 
+        vlist = list(visits.values())
+        whole_brains =[[] for i in range(0,5)]
+        hippocampuses =[[] for i in range(0,5)]
+        entorhinals =[[] for i in range(0,5)]
+        fusiforms =[[] for i in range(0,5)]
+        wholebrain_means = []
+        hippocampus_means = []
+        entorhinal_means = []
+        fusiform_means = []
+        for visit in vlist:
+            if float(visit['AGE'])<50:
+                continue
+            age_group = int(math.floor(float(visit['AGE'])/10)) 
+            if visit["WholeBrain"] is not None:
+                whole_brains[age_group-5].append(float(visit["WholeBrain"]))
+            if visit["Hippocampus"] is not None:
+                hippocampuses[age_group-5].append(float(visit["Hippocampus"]))   
+            if visit["Entorhinal"] is not None:
+                entorhinals[age_group-5].append(float(visit["Entorhinal"]))    
+            if visit["Fusiform"] is not None:
+                fusiforms[age_group-5].append(float(visit["Fusiform"]))      
+
+        for wb in whole_brains:
+            if len(wb)==0:
+                wholebrain_means.append(0)
+            else:
+                wholebrain_means.append(float(sum(wb)/len(wb)))
+        for h in hippocampuses:        
+            if len(h)==0:
+                hippocampus_means.append(0)
+            else:
+                hippocampus_means.append(float(sum(h)/len(h)))
+        for e in entorhinals:        
+            if len(e)==0:
+                entorhinal_means.append(0)
+            else:
+                entorhinal_means.append(float(sum(e)/len(e)))
+        for f in fusiforms:        
+            if len(f)==0:
+                fusiform_means.append(0)
+            else:  
+                fusiform_means.append(float(sum(f)/len(f)))
+      
+
+        age_labels = ["50-60","60-70","70-80","80-90","90+"]
+        font = {'family' : 'Calibri', 'size'   : 9}
+        plt.rc('font', **font)
+
+        plt.subplot(2, 2, 1)
+        plt.subplots_adjust(left=0.1,
+                    bottom=0.1, 
+                    right=0.9, 
+                    top=0.9, 
+                    wspace=0.4, 
+                    hspace=0.4)
+        plt.bar(age_labels,wholebrain_means, color=(0.2, 0.4, 0.6, 0.6))
+        plt.xlabel('Age')
+        plt.ylabel('Whole Brain Size')
+
+        plt.subplot(2, 2, 2)
+        plt.bar(age_labels,hippocampus_means, color=(0.2, 0.4, 0.6, 0.6))
+        plt.xlabel('Age')
+        plt.ylabel('Hippocampus Size')
+
+        plt.subplot(2, 2, 3)
+        plt.bar(age_labels,entorhinal_means, color=(0.2, 0.4, 0.6, 0.6))
+        plt.xlabel('Age')
+        plt.ylabel('Entorhinal Size')
+
+        plt.subplot(2, 2, 4)
+        plt.bar(age_labels,fusiform_means, color=(0.2, 0.4, 0.6, 0.6))
+        plt.xlabel('Age')
+        plt.ylabel('Fusiform Size')
+
+        plt.savefig("bars.png", dpi=300, bbox_inches='tight', format="png")
+        plt.close()
+
+        with open("bars.png","rb") as imagefile:
+            byteform = base64.b64encode(imagefile.read())
+
+        if AgeGraphsImg.objects.first() is None:            
+            AgeGraphsImg.objects.create(ID="1",isUpdated=True, ImageBytes=byteform)
+        else:
+            AgeGraphsImg.objects.filter(ID="1").update(isUpdated=True, ImageBytes=byteform) 
+
+        agegraphs_serializer = AgeGraphsSerializer(AgeGraphsImg.objects.first())
+
+        return JsonResponse({"status": {"success": True,"message": "Successfully fetched"},"graph": agegraphs_serializer.data},status=200) 
 
 
 

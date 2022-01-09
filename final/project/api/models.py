@@ -95,6 +95,15 @@ class TSNEImg(models.Model):
     ImageBytes = models.CharField(max_length=5000)
     isUpdated = models.BooleanField()
 
+class AgeGraphsImg(models.Model):   
+    ID = models.CharField(max_length=2)
+    ImageBytes = models.CharField(max_length=5000)
+    isUpdated = models.BooleanField()   
+
+class SelectedModel(models.Model):   
+    ID = models.CharField(primary_key=True,max_length=2)
+    ClassNum = models.CharField(max_length=2)  
+
 
 
 

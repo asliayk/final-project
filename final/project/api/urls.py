@@ -18,5 +18,7 @@ urlpatterns = [
     path("getVisits",views.getVisits),
     path("getStatistics",views.getStatistics),
     path("getSimilarVisits",views.getSimilarVisits),
-    path("getTSNE",views.getTSNE)
+    path("getTSNE",views.getTSNE),
+    path("getAgeGraphs",views.getAgeGraphs),
+    path("selectModel",views.selectModel)
 ]
