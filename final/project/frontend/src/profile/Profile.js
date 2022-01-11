@@ -27,6 +27,7 @@ import LockIcon from '@material-ui/icons/Lock';
 import AddCircleIcon from '@material-ui/icons/AddCircle';
 import Tooltip from "@material-ui/core/Tooltip";
 import {PlaylistAdd} from "@material-ui/icons";
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 
 
 
@@ -140,7 +141,7 @@ function Profile(props) {
     useEffect(() => {
         const docid=props.location.state.id
 
-            fetch( 'http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/doctorProfile/'+docid+'/'
+            fetch( 'http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/doctorProfile/'+docid+'/'
         , {
                 method: 'GET',
                 headers: {'Content-Type': 'application/json'}
@@ -235,6 +236,14 @@ function Profile(props) {
                                                         <PlaylistAdd/>
                                                     </ListItemIcon>
                                                     <ListItemText primary="Add Visitation"/>
+                                                </ListItem>
+                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                          component={Link}  to={{pathname: "/similarvisits", state: {id: props.location.state.id}}}
+                                                >
+                                                    <ListItemIcon>
+                                                      <PersonSearchIcon/>
+                                                    </ListItemIcon>
+                                                    <ListItemText primary="Similar Visitations"/>
                                                 </ListItem>
 
                                             </List>

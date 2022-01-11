@@ -157,13 +157,13 @@ function Patient(props) {
     useEffect(() => {
 
 
-            fetch( 'http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/patientProfile/'+id+'/'
+            fetch( 'http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/patientProfile/'+id+'/'
         , {
                 method: 'GET',
                 headers: {'Content-Type': 'application/json'}
             }).then(res => res.json())
                 .then(json => {
-                    //console.log(json)
+                    console.log(json)
                     setprognosis(json.visits)
                     setlastdiagnosis(json.patient.DX)
                     //setlastdiagnosisscore(json.patient.LastScore)
@@ -351,7 +351,7 @@ function Patient(props) {
                                         />
                                     </div>
                                     <div style={{color: "black",marginLeft: "1rem",fontSize: 20}}>
-                                    {lastdiagnosis+"   "+lastdiagnosisscore}
+                                    {"DX: "+prognosis[0].DX+" Category: "+prognosis[0].category+" Confidence_Level(Soft_max): "+prognosis[0].softmax}
                                     </div>
                                 </Paper>
                                 <Paper className={classes.paper2}>

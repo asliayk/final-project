@@ -28,9 +28,12 @@ import LockIcon from '@material-ui/icons/Lock';
 import AddCircleIcon from '@material-ui/icons/AddCircle';
 import Tooltip from "@material-ui/core/Tooltip";
 import FileRead from "../components/fileread";
-import ScrollList from "../components/scrolllist";
+import ScrollList from "../components/similarvisitsscroll";
 import SendIcon from '@mui/icons-material/Send';
 import {PlaylistAdd} from "@material-ui/icons";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import SimilarvisitScrollList from "../components/similarvisitsscroll";
+import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 
 
 const useStyles = makeStyles((theme) => ({
@@ -53,7 +56,7 @@ const useStyles = makeStyles((theme) => ({
         color: theme.palette.text.secondary,
     },
     paper2: {
-        height: "44rem",
+        height: "70rem",
 
         padding: theme.spacing(2),
         color: theme.palette.text.secondary,
@@ -83,7 +86,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-function AddVisit(props) {
+function SimilarPatients(props) {
     let [loadPage, setLoadPage] = React.useState(false);
     const classes = useStyles();
     let [open, setOpen] = React.useState(false);
@@ -112,38 +115,72 @@ function AddVisit(props) {
 
 
     const [info, setInfo] = useState({
-        age:'',
-        ptgender:'',
-        pteducat:'',
-        ptethcat:'',
-        ptraccat:'',
-        ptmarry:'',
-        apoe4:'',
-        dx_bl:'',
-        dx:'',
-        examdate:'',
-        id:''
+
+        rid:'',
+        ptid:'',
+        viscode:''
 
 
     });
+    const [dataFetched, setDataFetched] = useState(false);
+    const [apicalled, setApicalled] = useState(false);
+    const [clicked, setClicked] = useState(false);
     const handleOnClick = () => {
-        fetch( 'http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/patientProfile/'+info.id+'/'
+        setDataFetched(false);
+        setApicalled(true);
+        setClicked(true);
+        const url = "http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/getSimilarVisits";
+        const data = {
+
+            RID: info.rid,
+            PTID: info.ptid,
+            VISCODE: info.viscode
+
+        }
+
+        fetch( url
+            , {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            }).then(res => res.json())
+            .then(json => {
+                console.log("aaaaaaa");
+                console.log(json);
+                console.log(json.visits);
+                setprognosis(json.visits)
+
+
+            }).then(() => {
+            setDataFetched(true);
+            setClicked(false);
+        }).then(json => {
+        })
+            .catch(err => console.log(err));
+    };
+    const [TSNE, setTSNE] = useState();
+    const [insideTSNE, setinsideTSNE] = useState(false);
+    const [tsneFetched, setTsneFetched] = useState(false);
+    const handleOnClickTSNE = () => {
+        console.log("sjdsj")
+        setinsideTSNE(true);
+        const url = "http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/getTSNE";
+        fetch( url
             , {
                 method: 'GET',
                 headers: {'Content-Type': 'application/json'}
             }).then(res => res.json())
             .then(json => {
-                //console.log(json)
-                setprognosis(json.visits)
-
-
+                let edited = "";
+                edited="data:image/png;base64,"+json.tsne.ImageBytes.split("b'")[1].slice(0,-1);
+                console.log(edited)
+                setTSNE(edited)
             }).then(() => {
-            setLoadPage(true)
+            setTsneFetched(true)
         }).then(json => {
         })
             .catch(err => console.log(err));
     };
-
 
     let [name, setName] = useState({
 
@@ -221,10 +258,10 @@ function AddVisit(props) {
                                 My Account
                             </Link>
                             <Link style={{color: "#0B3954"}}to={{
-                                pathname: '/visitadd',
+                                pathname: '/similarvisits',
                                 state: { id: id }
                             }}>
-                                Add Visitation
+                               Similar Visitations
                             </Link>
                         </Breadcrumbs>
 
@@ -259,13 +296,13 @@ function AddVisit(props) {
                                             component="nav"
                                             className={classes.root}
                                         >
-                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
-                                                          component={Link}    to={{pathname: "/doctorpatients", state: {id: props.location.state.id}}}>
-                                                    <ListItemIcon>
-                                                        <ReorderIcon/>
-                                                    </ListItemIcon>
-                                                    <ListItemText primary="My Patients"/>
-                                                </ListItem>
+                                            <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                      component={Link}    to={{pathname: "/doctorpatients", state: {id: props.location.state.id}}}>
+                                                <ListItemIcon>
+                                                    <ReorderIcon/>
+                                                </ListItemIcon>
+                                                <ListItemText primary="My Patients"/>
+                                            </ListItem>
 
                                             <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
                                                       component={Link}   to={{pathname: "/patientadd", state: {id: props.location.state.id}}}
@@ -283,7 +320,14 @@ function AddVisit(props) {
                                                 </ListItemIcon>
                                                 <ListItemText primary="Add Visitation"/>
                                             </ListItem>
-
+                                            <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                      component={Link}  to={{pathname: "/similarvisits", state: {id: props.location.state.id}}}
+                                            >
+                                                <ListItemIcon>
+                                                    <PersonSearchIcon/>
+                                                </ListItemIcon>
+                                                <ListItemText primary="Similar Visitations"/>
+                                            </ListItem>
                                         </List>
                                     </div>
 
@@ -301,34 +345,59 @@ function AddVisit(props) {
                                                 marginLeft: "12rem",
                                                 marginBottom: "2rem"
                                             }}
-                                            defaultValue="Add Visitation"
+                                            defaultValue="Similarities"
                                             disabled={true}
                                         />
                                     </div>
                                     <div style={{marginLeft: "6rem"}}>
                                         <Grid container spacing={3}>
-                                            <Grid item xs={10} sm={6}>
+                                            <Grid item xs={12} sm={2}>
                                                 <TextField
                                                     fullWidth
-                                                    id="id"
-                                                    label="Enter the Patient ID"
+                                                    id="rid"
+                                                    label="RID"
                                                     variant="outlined"
-                                                    defaultValue={info.id}
+                                                    defaultValue={info.rid}
                                                     disabled={!add}
                                                     onChange={onChange}
 
                                                 />
                                             </Grid>
-                                            <Grid item xs={10} sm={4}>
-                                            <Button variant="contained" onClick={handleOnClick}   style={{
-                                                backgroundColor: "green",
-                                                color:'white',
-                                                fontSize: 22,
-                                                fontWeight: "500",
-                                            }}  endIcon={<SendIcon />}>
-                                                List Visits
-                                            </Button>
-                                                </Grid>
+                                            <Grid item xs={12} sm={2}>
+                                                <TextField
+                                                    fullWidth
+                                                    id="ptid"
+                                                    label="PTID"
+                                                    variant="outlined"
+                                                    defaultValue={info.ptid}
+                                                    disabled={!add}
+                                                    onChange={onChange}
+
+                                                />
+                                            </Grid>
+                                            <Grid item xs={12} sm={3}>
+                                                <TextField
+                                                    fullWidth
+                                                    id="viscode"
+                                                    label="VISCODE"
+                                                    variant="outlined"
+                                                    defaultValue={info.viscode}
+                                                    disabled={!add}
+                                                    onChange={onChange}
+
+                                                />
+                                            </Grid>
+                                            <Grid item xs={12} sm={2}>
+                                                <Button disabled={clicked} variant="contained" onClick={handleOnClick}   style={{
+                                                    backgroundColor: "orange",
+                                                    color:'white',
+                                                    fontSize: 20,
+                                                    fontWeight: "500",
+                                                }}  endIcon={<SendIcon />}>
+                                                    RESULTS
+                                                </Button>
+                                            </Grid>
+
                                             <Grid item xs={10}>
                                                 <Paper >
                                                     <div>
@@ -339,42 +408,48 @@ function AddVisit(props) {
                                                                 fontWeight: "500",
 
                                                             }}
-                                                            defaultValue="Upload Visitation Results"
+                                                            defaultValue="Similar Visitations"
 
                                                         />
                                                     </div>
-                                                    <FileRead id={info.id}/>
-                                                    <div style={{marginTop: '1rem'}}>
+                                                    {(!dataFetched)&&apicalled ? (
+                                                        <CircularProgress />
+                                                    ) : (
+                                                        <SimilarvisitScrollList listof={prognosis} />
+                                                    )}
+                                                </Paper>
 
-
-
-                                                    </div>
-
-                                                </Paper></Grid>
-                                            <Grid item xs={10}>
-                                            <Paper >
-                                                <div>
-                                                    <InputBase
-                                                        style={{
-                                                            color: "black",
-                                                            fontSize: 30,
-                                                            fontWeight: "500",
-
-                                                        }}
-                                                        defaultValue="Visitations"
-
-                                                    />
-                                                </div>
-                                                <ScrollList listof={prognosis} />
-                                            </Paper></Grid>
-
-
-
-
+                                            </Grid>
 
                                         </Grid>
-
-
+                                        <Grid  >{!insideTSNE ?
+                                            <Button disabled={clicked} variant="contained" onClick={handleOnClickTSNE}   style={{
+                                                backgroundColor: "green",
+                                                color:'white',
+                                                fontSize: 20,
+                                                fontWeight: "500",
+                                                width:'40rem',
+                                                marginTop:'1rem'
+                                            }}  endIcon={<SendIcon />}>
+                                                FETCH TSNE GRAPH
+                                            </Button>:(<div style={{
+                                                marginTop:'1rem'
+                                            }}></div>)}
+                                            {(!tsneFetched)&&insideTSNE ? (
+                                                <CircularProgress style={{
+                                                    marginTop:'1rem'
+                                                }} />
+                                            ) : ([]
+                                            )}
+                                            {(tsneFetched) ? (
+                                                <img style={{
+                                                    marginTop:'1rem',
+                                                    width:'40rem',
+                                                    height:'30rem'
+                                                }} src={TSNE} alt="Red dot"/>
+                                            ) : ([]
+                                            )}
+                                        </Grid>
                                     </div>
                                 </Paper>
                             </Grid>
@@ -388,4 +463,4 @@ function AddVisit(props) {
     );
 }
 
-export default AddVisit;
+export default SimilarPatients;

@@ -118,7 +118,7 @@ export default function Doctor_patients_list(props) {
     useEffect(() => {
 
 
-        fetch("http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/doctorProfile/"+docid+'/', {
+        fetch("http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/doctorProfile/"+docid+'/', {
 
         })
             .then((response) => response.json())
@@ -133,7 +133,7 @@ export default function Doctor_patients_list(props) {
                 setPlist(data.patients.slice(0,10))
                 setNum(lendivideten)
             }).then(() => {
-            fetch("http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/getStatistics", {
+            fetch("http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/getStatistics", {
 
             })
                 .then((response2) => response2.json())

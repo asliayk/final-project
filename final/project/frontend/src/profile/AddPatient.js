@@ -120,7 +120,7 @@ function AddPatient(props) {
 
     });
     const handleOnClick = () => {
-        const url = "http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/addPatient";
+        const url = "http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/addPatient";
         const data = {
 
             AGE: info.age,
@@ -193,7 +193,7 @@ function AddPatient(props) {
     useEffect(() => {
         const docid=props.location.state.id
 
-        fetch( 'http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/doctorProfile/'+docid+'/'
+        fetch( 'http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/doctorProfile/'+docid+'/'
             , {
                 method: 'GET',
                 headers: {'Content-Type': 'application/json'}

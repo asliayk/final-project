@@ -7,6 +7,7 @@ import { CssBaseline } from "@material-ui/core";
 import Profile from "./profile/Profile";
 import AddPatient from "./profile/AddPatient";
 import AddVisit from "./profile/AddVisit";
+import SimilarPatients from "./profile/SimilarPatients";
 function App() {
     return (
         <React.Fragment>
@@ -19,6 +20,7 @@ function App() {
                     <Route exact path="/patient" exact component={Patient} />
                     <Route exact path="/patientadd" exact component={AddPatient} />
                     <Route exact path="/visitadd" exact component={AddVisit} />
+                    <Route exact path="/similarvisits" exact component={SimilarPatients} />
                 </Switch>
             </div>
         </React.Fragment>
