@@ -62,7 +62,7 @@ function Login() {
 
     function handleOnClick() {
 
-            const url = "http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/login";
+            const url = "http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/login";
             const data = {
                 DoctorId: state.DoctorId,
                 Password: state.Password,

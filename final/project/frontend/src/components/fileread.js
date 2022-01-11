@@ -44,7 +44,7 @@ const handleOnClick2=()=>{
     const handleOnClick = () => {
         console.log('inside')
 
-        const url = "http://tdjango.eba-ixskapzh.us-west-2.elasticbeanstalk.com/api/addVisit";
+        const url = "http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/addVisit";
         const data = {
             RID: result.split(',')[0].split(' ')[result.split(',')[0].split(' ').length-1],
             PTID: result.split(',')[1].split(' ')[result.split(',')[1].split(' ').length-1],
@@ -149,7 +149,7 @@ const handleOnClick2=()=>{
                         }}
                         variant="contained"
 
-                        onClick={result!=''?handleOnClick:handleOnClick2()}
+                        onClick={handleOnClick}
                     >
                         ADD
                     </Button>

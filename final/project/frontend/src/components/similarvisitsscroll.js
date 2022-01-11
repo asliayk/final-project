@@ -39,7 +39,7 @@ const useStyles = makeStyles((theme) => ({
 
 }));
 
-export const ScrollList  = ({listof}) => {
+export const SimilarvisitScrollList  = ({listof}) => {
     const [open, setOpen] = React.useState(false);
     const [value, setValue] = React.useState([]);
 
@@ -54,7 +54,7 @@ export const ScrollList  = ({listof}) => {
     const classes = useStyles();
     let category='';
 
-    
+
     return (
 
         <List  dense className={classes.list}>
@@ -64,9 +64,9 @@ export const ScrollList  = ({listof}) => {
 
                     <ListItem onClick={()=>handleClickOpen(value)}  key={value} button>
                         <div>
-                        <Stack direction="row" spacing={20}>
-                        <ListItemText  classes={{primary:classes.listItemText}} id={labelId} primary={`${"DATE: "+value.EXAMDATE+" DX: "+value.DX + " Category: " + value.category+" Confience_Level(Soft_max): "+value.softmax}`}/>
-                        </Stack>
+                            <Stack direction="row" spacing={20}>
+                                <ListItemText  classes={{primary:classes.listItemText}} id={labelId} primary={`${"RID: "+value.RID+" PTID: "+value.PTID+" VISCODE: "+value.VISCODE+" DATE: "+value.EXAMDATE+" DX: "+value.DX+" Category: "+value.category+" Confidence_Level (Soft_max): "+value.softmax }`}/>
+                            </Stack>
                         </div>
 
                     </ListItem>
@@ -118,4 +118,4 @@ export const ScrollList  = ({listof}) => {
 
 
 }
-export default ScrollList;
+export default SimilarvisitScrollList;
