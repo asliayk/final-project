@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from django.http.response import JsonResponse
-from django.db.models import Q
+from django.db.models import Q, Avg
 
 from api.models import Doctor, Patient, Visit, TSNEImg, AgeGraphsImg, SelectedModel
 from api.serializers import DoctorSerializer, PatientSerializer, VisitSerializer, TSNESerializer, AgeGraphsSerializer, SelectedModelSerializer
@@ -46,17 +46,17 @@ def timestamped_name(num):
     img_name = timestamp + postfix
     return img_name
 
-def modeldata_to_float(df):
+# def modeldata_to_float(df):
 
-    feature_list = ['AGE','ADAS11','ADAS11_bl','ADAS13','ADAS13_bl','APOE4','CDRSB','CDRSB_bl','Entorhinal',
-    'Entorhinal_bl','FAQ','FAQ_bl','FDG','FDG_bl','Fusiform','Fusiform_bl','Hippocampus','Hippocampus_bl',
-    'ICV','ICV_bl','MMSE','MMSE_bl','MidTemp','MidTemp_bl','RAVLT_immediate','RAVLT_learning','RAVLT_forgetting',
-    'RAVLT_perc_forgetting','RAVLT_immediate_bl','MMSE_bl','Ventricles','Ventricles_bl','WholeBrain','WholeBrain_bl']
+#     feature_list = ['AGE','ADAS11','ADAS11_bl','ADAS13','ADAS13_bl','CDRSB','CDRSB_bl','Entorhinal',
+#     'Entorhinal_bl','FAQ','FAQ_bl','FDG','FDG_bl','Fusiform','Fusiform_bl','Hippocampus','Hippocampus_bl',
+#     'ICV','ICV_bl','MMSE','MMSE_bl','MidTemp','MidTemp_bl','RAVLT_immediate','RAVLT_learning','RAVLT_forgetting',
+#     'RAVLT_perc_forgetting','RAVLT_immediate_bl','MMSE_bl','Ventricles','Ventricles_bl','WholeBrain','WholeBrain_bl']
 
-    for feature in feature_list:
-        df[feature] = pd.to_numeric(df[feature], downcast="float")
+#     for feature in feature_list:
+#         df[feature] = pd.to_numeric(df[feature], downcast="float")
     
-    return df
+#     return df
 
 def get_onehot_columns(df, cat_col_list):
     for i in cat_col_list:
@@ -122,12 +122,14 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
     time_dict = dict(zip(df[date_column].unique(), months_list))
 
 
-    num_column_list = sorted([col for col in df.select_dtypes(include=["int", "int64", "float","float32"]).columns if
+    num_column_list = sorted([col for col in df.select_dtypes(include=["int", "int64", "float","float32","int32","float64"]).columns if
                               col not in [id_column, date_column, label_column]])
+  
     cat_column_list = sorted([col for col in df.select_dtypes(include=['category', 'object']).columns if
                               col not in [id_column, date_column, label_column]])
     #--num_column_list = ['ADAS11', 'ADAS11_bl', 'ADAS13', 'ADAS13_bl', 'AGE', 'APOE4', 'CDRSB', 'CDRSB_bl', 'Entorhinal', 'Entorhinal_bl', 'FAQ', 'FAQ_bl', 'FDG', 'FDG_bl', 'Fusiform', 'Fusiform_bl', 'Hippocampus', 'Hippocampus_bl', 'ICV', 'ICV_bl', 'MMSE', 'MMSE_bl', 'MidTemp', 'MidTemp_bl', 'RAVLT_immediate', 'RAVLT_immediate_bl', 'Ventricles', 'Ventricles_bl', 'WholeBrain', 'WholeBrain_bl']
   
+    
     df = get_onehot_columns(df, cat_column_list)
    
     df[date_column] = df[date_column].apply(lambda x: time_dict[x])
@@ -154,6 +156,11 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
     for col in num_column_list:
         df[col] = df[col].fillna(df.groupby(label_column)[col].transform('mean'))
 
+    for col in num_column_list:
+        val = Visit.objects.all().aggregate(Avg(col))
+        av = val[str(col+"__avg")]
+        df[col] = df[col].fillna(int(av))    
+
 
     #mapping = {k: v for v, k in enumerate(sorted(df[id_column].unique()))}
     #df[id_column] = df[id_column].map(mapping)
@@ -178,7 +185,40 @@ def getVisits(request):
 @csrf_exempt
 def getStatistics(request):
     if request.method == 'GET':
-        total = Patient.objects.all().count()    
+        total = Patient.objects.all().count()  
+
+        model = SelectedModel.objects.first()
+        model_serializer = SelectedModelSerializer(model)
+        selected_model = model_serializer.data["ClassNum"]
+        avg_age = Patient.objects.all().aggregate(Avg("AGE"))["AGE__avg"]
+        avg_age = str(float("{:.2f}".format(avg_age)))
+
+        qPatientLabels = list(Patient.objects.values('DX').order_by().annotate(Count('DX')))
+        MCI_count = str(0)
+        Dementia_count = str(0)
+        NL_count = str(0)
+        MCI_to_NL_count = str(0)
+        MCI_to_Dementia_count = str(0)
+        Dementia_to_MCI_count = str(0)
+        NL_to_MCI_count = str(0)
+        NL_to_Dementia_count = str(0)
+        for item in qPatientLabels:
+            if item["DX"]=="MCI":
+                MCI_count = str(item["DX__count"])
+            elif item["DX"]=="Dementia":
+                Dementia_count = str(item["DX__count"])
+            elif item["DX"]=="NL":
+                NL_count = str(item["DX__count"])
+            elif item["DX"]=="MCI to NL":
+                MCI_to_NL_count = str(item["DX__count"])
+            elif item["DX"]=="MCI to Dementia":
+                MCI_to_Dementia_count = str(item["DX__count"])    
+            elif item["DX"]=="Dementia to MCI":
+                Dementia_to_MCI_count = str(item["DX__count"])   
+            elif item["DX"]=="NL to MCI":
+                NL_to_MCI_count = str(item["DX__count"])    
+            elif item["DX"]=="NL to Dementia":
+                NL_to_Dementia_count = str(item["DX__count"])                     
 
         qGender = list(Patient.objects.values('PTGENDER').order_by().annotate(Count('PTGENDER')))
         for item in qGender:
@@ -393,7 +433,7 @@ def getStatistics(request):
                 Female_NLtoDementia = str(float("{:.2f}".format((item["DX__count"]/total)*100)))                     
   
 
-        statistics = {"AvgAge": "67.10", "FemalePercentage": FemalePercentage, "MarriedPercentage_m": MarriedPercentage_m,
+        statistics = {"AvgAge": avg_age, "FemalePercentage": FemalePercentage, "MarriedPercentage_m": MarriedPercentage_m,
         "WidowedPercentage_m": WidowedPercentage_m, "NeverMarriedPercentage_m": NeverMarriedPercentage_m, "DivorcedPercentage_m": DivorcedPercentage_m,
         "UnknownPercentage_m": UnknownPercentage_m, "WhitePercentage_race": WhitePercentage_race, "BlackPercentage_race": BlackPercentage_race,
         "AsianPercentage_race": AsianPercentage_race, "UnknownPercentage_race": UnknownPercentage_race, "AmIndianAlaskanPercentage_race": AmIndianAlaskanPercentage_race,
@@ -406,8 +446,10 @@ def getStatistics(request):
         "NLtoMCI_NeverMarried": NLtoMCI_NeverMarried, "NLtoMCI_Married": NLtoMCI_Married, "NLtoMCI_Widowed": NLtoMCI_Widowed, "NLtoMCI_Divorced": NLtoMCI_Divorced,
         "DementiatoMCI_NeverMarried": DementiatoMCI_NeverMarried, "DementiatoMCI_Married": DementiatoMCI_Married, "DementiatoMCI_Widowed": DementiatoMCI_Widowed, "DementiatoMCI_Divorced": DementiatoMCI_Divorced,
         "NLtoDementia_NeverMarried": NLtoDementia_NeverMarried, "NLtoDementia_Married": NLtoDementia_Married, "NLtoDementia_Widowed": NLtoDementia_Widowed, "NLtoDementia_Divorced": NLtoDementia_Divorced,
-        "Female_MCI": Female_MCI, "Female_NL": Female_NL, "Female_Dementia": Female_Dementia,"FemaleNLtoMCI": Female_NLtoMCI, "FemaleMCItoDementia": Female_MCItoDementia, "Female_MCItoNL": Female_MCItoNL, "Female_DementiatoMCI": Female_DementiatoMCI, "Female_NLtoDementia": Female_NLtoDementia,
-        "Male_MCI": Male_MCI, "Male_NL": Male_NL, "Male_Dementia": Male_Dementia,"MaleNLtoMCI": Male_NLtoMCI,"MaleMCItoDementia": Male_MCItoDementia, "Male_MCItoNL": Male_MCItoNL, "Male_DementiatoMCI": Male_DementiatoMCI, "Male_NLtoDementia": Male_NLtoDementia
+        "Female_MCI": Female_MCI, "Female_NL": Female_NL, "Female_Dementia": Female_Dementia,"Female_NLtoMCI": Female_NLtoMCI, "Female_MCItoDementia": Female_MCItoDementia, "Female_MCItoNL": Female_MCItoNL, "Female_DementiatoMCI": Female_DementiatoMCI, "Female_NLtoDementia": Female_NLtoDementia,
+        "Male_MCI": Male_MCI, "Male_NL": Male_NL, "Male_Dementia": Male_Dementia,"Male_NLtoMCI": Male_NLtoMCI,"Male_MCItoDementia": Male_MCItoDementia, "Male_MCItoNL": Male_MCItoNL, "Male_DementiatoMCI": Male_DementiatoMCI, "Male_NLtoDementia": Male_NLtoDementia,
+        "MCI_count": MCI_count, "Dementia_count": Dementia_count, "NL_count": NL_count, "MCI_to_Dementia_count": MCI_to_Dementia_count, "MCI_to_NL_count": MCI_to_NL_count, "NL_to_MCI_count": NL_to_MCI_count, "Dementia_to_MCI_count": Dementia_to_MCI_count, "NL_to_Dementia_count": NL_to_Dementia_count,
+        "selected_model": selected_model
         
         }
 
@@ -577,19 +619,15 @@ def getPatientProfile(request,id):
         if selected_model=="8":
             model_path='api/deneme_model_fwobl_8_2048.pth'
             s_labels = ["Dementia","Dementia to MCI","MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"]
-            print("sekizde")
         elif selected_model=="2":
             model_path='api/deneme_model_upf_2.pth'
             s_labels = ["Dementia","MCI"]
-            print("ikide")
         elif selected_model=="3":
             model_path='api/deneme_model_upf_3.pth'
             s_labels = ["Dementia","MCI","NL"]
-            print("üçte")
         else:
             model_path='api/deneme_model_upf_4.pth'
             s_labels = ["Dementia","MCI to Dementia","NL","NL to MCI"]  
-            print("dörtte")
 
         if selected_model!="8":
             features = ['AGE', 'APOE4', 'CDRSB', 'ADAS11', 'ADAS13', 'MMSE', 'RAVLT_immediate', 'RAVLT_learning', 'RAVLT_forgetting', 'RAVLT_perc_forgetting', 'FAQ', 'Ventricles', 'Hippocampus',
@@ -614,16 +652,30 @@ def getPatientProfile(request,id):
         
         
 
-        df = modeldata_to_float(df)
+        #df = modeldata_to_float(df)
+        df["FDG"] = df.FDG.astype(float)
+
+        # for col in num_column_list:
+        #     val = Visit.objects.all().aggregate(Avg(col))
+        #     av = val[str(col+"__avg")]
+        
+        #     df[col] = df[col].fillna(int(av))
+
+        # pd.set_option("display.max_rows", None, "display.max_columns", None)
+
+        # print(df)  
+        # print("BİTTİ")  
 
         #features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
 
         #features_list = sorted(features + features_bl)
         features_list = sorted(features)
         cols = [id_column, date_column] + features_list
-        data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=False)
+        data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=True)
         values = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=s_labels)     
         values = values.astype(np.float32)
+
+        #print(values)
 
         seed = 0
         torch.manual_seed(seed)
@@ -634,8 +686,6 @@ def getPatientProfile(request,id):
         with torch.no_grad():
          values = torch.from_numpy(values).to(device)
          pred = model(values)
-
-  
 
         m = softmax(np.array(pred),axis=1)
    
@@ -678,25 +728,22 @@ def getSimilarVisits(request):
         if selected_model=="8":
             model_path='api/deneme_model_fwobl_8_2048.pth'
             s_labels = ["Dementia","Dementia to MCI","MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"]
-            print("sekizde")
         elif selected_model=="2":
             model_path='api/deneme_model_upf_2.pth'
             s_labels = ["Dementia","MCI"]
-            print("ikide")
         elif selected_model=="3":
             model_path='api/deneme_model_upf_3.pth'
             s_labels = ["Dementia","MCI","NL"]
-            print("üçte")
         else:
             model_path='api/deneme_model_upf_4.pth'
             s_labels = ["Dementia","MCI to Dementia","NL","NL to MCI"]  
-            print("dörtte")
 
         if selected_model!="8":
             features = ['AGE', 'APOE4', 'CDRSB', 'ADAS11', 'ADAS13', 'MMSE', 'RAVLT_immediate', 'RAVLT_learning', 'RAVLT_forgetting', 'RAVLT_perc_forgetting', 'FAQ', 'Ventricles', 'Hippocampus',
             'WholeBrain', 'Entorhinal', 'Fusiform', 'MidTemp', 'ICV']
 
-        df = modeldata_to_float(df)
+        #df = modeldata_to_float(df)
+        df["FDG"] = df.FDG.astype(float)
 
         #features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
 
@@ -791,26 +838,23 @@ def getTSNE(request):
         if selected_model=="8":
             model_path='api/deneme_model_fwobl_8_2048.pth'
             s_labels = ["Dementia","Dementia to MCI","MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"]
-            print("sekizde")
         elif selected_model=="2":
             model_path='api/deneme_model_upf_2.pth'
             s_labels = ["Dementia","MCI"]
-            print("ikide")
         elif selected_model=="3":
             model_path='api/deneme_model_upf_3.pth'
             s_labels = ["Dementia","MCI","NL"]
-            print("üçte")
         else:
             model_path='api/deneme_model_upf_4.pth'
             s_labels = ["Dementia","MCI to Dementia","NL","NL to MCI"]  
-            print("dörtte")
 
         if selected_model!="8":
             features = ['AGE', 'APOE4', 'CDRSB', 'ADAS11', 'ADAS13', 'MMSE', 'RAVLT_immediate', 'RAVLT_learning', 'RAVLT_forgetting', 'RAVLT_perc_forgetting', 'FAQ', 'Ventricles', 'Hippocampus',
             'WholeBrain', 'Entorhinal', 'Fusiform', 'MidTemp', 'ICV']
 
 
-        df = modeldata_to_float(df)
+        #df = modeldata_to_float(df)
+        df["FDG"] = df.FDG.astype(float)
 
         #features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
 
