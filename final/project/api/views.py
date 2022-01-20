@@ -38,6 +38,7 @@ import math
 import time
 from scipy.special import softmax
 
+#np.random.seed(0)
 
 # Create your views here.
 def timestamped_name(num):
@@ -89,7 +90,6 @@ def prepare_model_data_2d(dat, test_ratio, pad_value, num_column_list, target_co
     dat[num_column_list] = scaler_x.transform(dat[num_column_list])
     
  
- 
     label_num = dat[target_col].nunique()
     dat = pd.concat([dat.drop(target_col, axis=1), pd.get_dummies(dat[target_col])], axis=1)
  
@@ -110,7 +110,9 @@ def prepare_model_data_2d(dat, test_ratio, pad_value, num_column_list, target_co
     y_test = np.asarray(labels[idx:, :]).astype('float32')
     pt_test = patients[idx:]
     return X_train, y_train, pt_train, X_test, y_test, pt_test
+    
     """ 
+    
 
     return values
 
@@ -144,6 +146,7 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
 
 
     #-n df = df.sort_values([id_column, date_column])
+ 
    
     if interpolation:
         df[[id_column, date_column] + num_column_list] = df[[id_column, date_column] + num_column_list].groupby(
@@ -152,22 +155,24 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
     df = df.groupby(id_column).apply(lambda x: x.fillna(method="ffill"))  # -already commented- .fillna(method="bfill"))
     # -already commented- df = df.fillna(df.mean())
 
+    
    
     for col in num_column_list:
         df[col] = df[col].fillna(df.groupby(label_column)[col].transform('mean'))
 
+    
     for col in num_column_list:
         val = Visit.objects.all().aggregate(Avg(col))
         av = val[str(col+"__avg")]
-        df[col] = df[col].fillna(int(av))    
+        df[col] = df[col].fillna(int(av))  
 
 
-    #mapping = {k: v for v, k in enumerate(sorted(df[id_column].unique()))}
-    #df[id_column] = df[id_column].map(mapping)
+    #-mapping = {k: v for v, k in enumerate(sorted(df[id_column].unique()))}
+    #-df[id_column] = df[id_column].map(mapping)
 
 
-    #-diag = df.groupby(id_column).last().reset_index().query("DX in {}".format(['NL', 'Dementia', 'MCI']))[id_column].tolist()
-    #-df =  df[df[id_column].isin(diag)]
+    #-already commented- diag = df.groupby(id_column).last().reset_index().query("DX in {}".format(['NL', 'Dementia', 'MCI']))[id_column].tolist()
+    #-already commented- df =  df[df[id_column].isin(diag)]
 
     if isSimilar or isTSNE:
         df = df.dropna()
@@ -550,7 +555,7 @@ def selectModel(request):
 def updatePatient(request):  
     if request.method == 'PUT':
         patient_data = JSONParser().parse(request)
-        patient = Patient.objects.get(PatientId=patient_data['PatientId'])
+        patient = Patient.objects.get(PTID=patient_data['PTID'])
         patient_serializer = PatientSerializer(patient,data=patient_data)
         if patient_serializer.is_valid():
             patient_serializer.save()
@@ -560,20 +565,19 @@ def updatePatient(request):
         return JsonResponse({"status": {"success": False,"message": "Update unsuccessful"}},status=400)          
 
 @csrf_exempt
-def deleteDoctor(request):   
-    if request.method == 'DELETE': 
-        doctor_data = JSONParser().parse(request)         
-        doctor = Doctor.objects.get(DoctorId=doctor_data['DoctorId'])
+def deleteDoctor(request,id):   
+    if request.method == 'DELETE':    
+        print(id)     
+        doctor = Doctor.objects.get(DoctorId=id)
         doctor.delete()
         return JsonResponse({"status": {"success": True,"message": "successfully deleted"}},status=200)
 
 @csrf_exempt
-def deletePatient(request):   
-    if request.method == 'DELETE': 
-        patient_data = JSONParser().parse(request)         
-        patient = Patient.objects.get(PTID=patient_data['PTID'])
+def deletePatient(request,id):   
+    if request.method == 'DELETE':         
+        patient = Patient.objects.get(PTID=id)
         patient.delete()
-        visits = Visit.objects.filter(PTID=patient_data["PTID"])
+        visits = Visit.objects.filter(PTID=id)
         visits.delete()
         if AgeGraphsImg.objects.filter(isUpdated=True) is not None:
             AgeGraphsImg.objects.filter(ID="1").update(isUpdated=False)
@@ -616,6 +620,7 @@ def getPatientProfile(request,id):
         'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]    
 
         selected_model = SelectedModel.objects.first().ClassNum
+     
         if selected_model=="8":
             model_path='api/deneme_model_fwobl_8_2048.pth'
             s_labels = ["Dementia","Dementia to MCI","MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"]
@@ -650,32 +655,19 @@ def getPatientProfile(request,id):
         pad_value = 10**5
         selected_months = [0, 6, 12, 18, 24]
         
-        
-
-        #df = modeldata_to_float(df)
-        df["FDG"] = df.FDG.astype(float)
-
-        # for col in num_column_list:
-        #     val = Visit.objects.all().aggregate(Avg(col))
-        #     av = val[str(col+"__avg")]
-        
-        #     df[col] = df[col].fillna(int(av))
-
-        # pd.set_option("display.max_rows", None, "display.max_columns", None)
-
-        # print(df)  
-        # print("BİTTİ")  
-
+       
         #features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
 
         #features_list = sorted(features + features_bl)
         features_list = sorted(features)
+       
         cols = [id_column, date_column] + features_list
-        data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=True)
+        data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=False)
+      
         values = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=s_labels)     
         values = values.astype(np.float32)
-
-        #print(values)
+          
+        
 
         seed = 0
         torch.manual_seed(seed)
@@ -688,6 +680,7 @@ def getPatientProfile(request,id):
          pred = model(values)
 
         m = softmax(np.array(pred),axis=1)
+        
    
         for cat,visit,softm in zip(pred.argmax(1).numpy(),visit_serializer.data,m):
             visit.update({"category":str(s_labels[cat]),"softmax":str(softm[cat])[0:4]}) 
@@ -743,7 +736,7 @@ def getSimilarVisits(request):
             'WholeBrain', 'Entorhinal', 'Fusiform', 'MidTemp', 'ICV']
 
         #df = modeldata_to_float(df)
-        df["FDG"] = df.FDG.astype(float)
+      
 
         #features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
 
