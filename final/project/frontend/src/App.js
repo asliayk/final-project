@@ -8,6 +8,8 @@ import Profile from "./profile/Profile";
 import AddPatient from "./profile/AddPatient";
 import AddVisit from "./profile/AddVisit";
 import SimilarPatients from "./profile/SimilarPatients";
+import SelectModel from "./profile/SelectModel";
+import MoreStatistics from "./profile/MoreStatistics";
 function App() {
     return (
         <React.Fragment>
@@ -21,6 +23,8 @@ function App() {
                     <Route exact path="/patientadd" exact component={AddPatient} />
                     <Route exact path="/visitadd" exact component={AddVisit} />
                     <Route exact path="/similarvisits" exact component={SimilarPatients} />
+                    <Route exact path="/selectmodel" exact component={SelectModel} />
+                    <Route exact path="/morestatistics" exact component={MoreStatistics} />
                 </Switch>
             </div>
         </React.Fragment>
