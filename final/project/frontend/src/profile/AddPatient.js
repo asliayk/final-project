@@ -135,7 +135,9 @@ function AddPatient(props) {
             EXAMDATE: info.examdate
 
         }
-
+       if(info.age==''||info.ptgender==''||info.pteducat==''||info.ptethcat==''||info.ptraccat==''||info.ptmarry==''||info.apoe4==''||info.dx_bl==''||info.dx==''||info.examdate==''){
+           setOpen2(true)
+       }else{
         fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json'},
@@ -146,18 +148,6 @@ function AddPatient(props) {
                 if (success) {
                     setPid(json.pid)
                     setOpen(true)
-                    setInfo( {age:'',
-                        ptgender:'',
-                        pteducat:'',
-                        ptethcat:'',
-                        ptraccat:'',
-                        ptmarry:'',
-                        apoe4:'',
-                        dx_bl:'',
-                        dx:'',
-                        examdate:'',})
-
-
                 } else {
                     alert('Problem occurred.');
                 }
@@ -165,7 +155,7 @@ function AddPatient(props) {
             .catch(err => {
                 alert('Some error has occurred')
                 console.log(err)
-            });
+            });}
 
 
     };
@@ -468,7 +458,7 @@ function AddPatient(props) {
                                                             }}
                                                             variant="contained"
 
-                                                            onClick={(info.age===''||info.ptgender===''||info.pteducat===''||info.ptethcat===''||info.ptraccat===''||info.ptmarry===''||info.apoe4===''||info.dx_bl===''||info.dx===''||info.examdate==='')?()=>setOpen2(true):()=>handleOnClick()}
+                                                            onClick={handleOnClick}
                                                         >
                                                             ADD
                                                         </Button>
