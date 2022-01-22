@@ -31,6 +31,9 @@ import FileRead from "../components/fileread";
 import ScrollList from "../components/scrolllist";
 import SendIcon from '@mui/icons-material/Send';
 import {PlaylistAdd} from "@material-ui/icons";
+import SelectAllIcon from "@mui/icons-material/SelectAll";
+import PieChartIcon from "@mui/icons-material/PieChart";
+import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 
 
 const useStyles = makeStyles((theme) => ({
@@ -259,16 +262,31 @@ function AddVisit(props) {
                                             component="nav"
                                             className={classes.root}
                                         >
-                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
-                                                          component={Link}    to={{pathname: "/doctorpatients", state: {id: props.location.state.id}}}>
-                                                    <ListItemIcon>
-                                                        <ReorderIcon/>
-                                                    </ListItemIcon>
-                                                    <ListItemText primary="My Patients"/>
-                                                </ListItem>
+                                            <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                      component={Link} to={{pathname: "/selectmodel", state: {id: props.location.state.id}}}>
+                                                <ListItemIcon>
+                                                    <SelectAllIcon/>
+                                                </ListItemIcon>
+                                                <ListItemText primary="Select Model"/>
+                                            </ListItem>
 
                                             <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
-                                                      component={Link}   to={{pathname: "/patientadd", state: {id: props.location.state.id}}}
+                                                      component={Link} to={{pathname: "/doctorpatients", state: {id: props.location.state.id}}}>
+                                                <ListItemIcon>
+                                                    <ReorderIcon/>
+                                                </ListItemIcon>
+                                                <ListItemText primary="My Patients"/>
+                                            </ListItem>
+                                            <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                      component={Link}  to={{pathname: "/morestatistics", state: {id: props.location.state.id}}}
+                                            >
+                                                <ListItemIcon>
+                                                    <PieChartIcon/>
+                                                </ListItemIcon>
+                                                <ListItemText primary="More Statistics"/>
+                                            </ListItem>
+                                            <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                      component={Link} to={{pathname: "/patientadd", state: {id: props.location.state.id}}}
                                             >
                                                 <ListItemIcon>
                                                     <AddCircleIcon/>
@@ -282,6 +300,14 @@ function AddVisit(props) {
                                                     <PlaylistAdd/>
                                                 </ListItemIcon>
                                                 <ListItemText primary="Add Visitation"/>
+                                            </ListItem>
+                                            <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                      component={Link}  to={{pathname: "/similarvisits", state: {id: props.location.state.id}}}
+                                            >
+                                                <ListItemIcon>
+                                                    <PersonSearchIcon/>
+                                                </ListItemIcon>
+                                                <ListItemText primary="Similar Visitations"/>
                                             </ListItem>
 
                                         </List>

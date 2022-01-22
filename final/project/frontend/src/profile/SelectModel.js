@@ -30,6 +30,8 @@ import {PlaylistAdd} from "@material-ui/icons";
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
+import SelectAllIcon from "@mui/icons-material/SelectAll";
+import PieChartIcon from "@mui/icons-material/PieChart";
 
 
 
@@ -175,6 +177,21 @@ function SelectModel(props) {
 
     useEffect(() => {
         const docid=props.location.state.id
+        fetch( 'http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/doctorProfile/'+docid+'/'
+            , {
+                method: 'GET',
+                headers: {'Content-Type': 'application/json'}
+            }).then(res => res.json())
+            .then(json => {
+
+                setName({first_name: json.doctor.Name,last_name: json.doctor.Surname,email: json.doctor.Mail})
+
+
+            }).then(() => {
+            setLoadPage(true)
+        }).then(json => {
+        })
+            .catch(err => console.log(err));
 
         fetch( 'http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/getModel'
             , {
@@ -195,7 +212,7 @@ function SelectModel(props) {
 
 
             }).then(() => {
-            setLoadPage(true)
+           // setLoadPage(true)
         }).then(json => {
         })
             .catch(err => console.log(err));
@@ -230,6 +247,12 @@ function SelectModel(props) {
                             }}>
                                 My Account
                             </Link>
+                            <Link style={{color: "#0B3954"}}to={{
+                                pathname: '/selectmodel',
+                                state: { id: id }
+                            }}>
+                                Select Model
+                            </Link>
                         </Breadcrumbs>
                     </div>
 
@@ -262,6 +285,13 @@ function SelectModel(props) {
                                             component="nav"
                                             className={classes.root}
                                         >
+                                            <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                      component={Link} to={{pathname: "/selectmodel", state: {id: props.location.state.id}}}>
+                                                <ListItemIcon>
+                                                    <SelectAllIcon/>
+                                                </ListItemIcon>
+                                                <ListItemText primary="Select Model"/>
+                                            </ListItem>
 
                                             <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
                                                       component={Link} to={{pathname: "/doctorpatients", state: {id: props.location.state.id}}}>
@@ -270,7 +300,14 @@ function SelectModel(props) {
                                                 </ListItemIcon>
                                                 <ListItemText primary="My Patients"/>
                                             </ListItem>
-
+                                            <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                      component={Link}  to={{pathname: "/morestatistics", state: {id: props.location.state.id}}}
+                                            >
+                                                <ListItemIcon>
+                                                    <PieChartIcon/>
+                                                </ListItemIcon>
+                                                <ListItemText primary="More Statistics"/>
+                                            </ListItem>
                                             <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
                                                       component={Link} to={{pathname: "/patientadd", state: {id: props.location.state.id}}}
                                             >

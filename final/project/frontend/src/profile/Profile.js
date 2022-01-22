@@ -148,8 +148,8 @@ function Profile(props) {
             }).then(res => res.json())
                 .then(json => {
 
-                    setName({first_name: json.doctor.Name,last_name: json.doctor.Surname,email: json.doctor.Mail})
-                 
+                    setName({first_name: json.doctor.Name,last_name: json.doctor.Surname,email: json.doctor.Mail,username:json.doctor.Name+"_"+json.doctor.Surname})
+
 
                 }).then(() => {
                 setLoadPage(true)
@@ -350,20 +350,13 @@ function Profile(props) {
 
                                             <Grid item xs={10}>
                                                 <TextField
-                                                    required
-
-                                                    id="address_1"
-                                                    name="address1"
-                                                    label="Address line 1"
                                                     fullWidth
+                                                    id="address"
+                                                    label="Address"
                                                     variant="outlined"
-                                                    autoComplete="shipping address-line1"
-                                                    disabled={!edit}
-
-                                                    defaultValue={''}
-
+                                                    defaultValue={" "}
+                                                    disabled={true}
                                                     onChange={onChange}
-
                                                 />
                                             </Grid>
 
@@ -385,7 +378,7 @@ function Profile(props) {
                                                                 backgroundColor: "#0B3954",
                                                             }}
                                                             variant="contained" color="primary"
-                                                            onClick={handleOnClick}
+                                                            //onClick={handleOnClick}
                                                         >
                                                             Save
                                                         </Button>
