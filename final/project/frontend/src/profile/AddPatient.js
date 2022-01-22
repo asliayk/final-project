@@ -27,6 +27,10 @@ import LockIcon from '@material-ui/icons/Lock';
 import AddCircleIcon from '@material-ui/icons/AddCircle';
 import Tooltip from "@material-ui/core/Tooltip";
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
+import SelectAllIcon from "@mui/icons-material/SelectAll";
+import PieChartIcon from "@mui/icons-material/PieChart";
+import {PlaylistAdd} from "@material-ui/icons";
+import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -135,7 +139,9 @@ function AddPatient(props) {
             EXAMDATE: info.examdate
 
         }
-
+       if(info.age==''||info.ptgender==''||info.pteducat==''||info.ptethcat==''||info.ptraccat==''||info.ptmarry==''||info.apoe4==''||info.dx_bl==''||info.dx==''||info.examdate==''){
+           setOpen2(true)
+       }else{
         fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json'},
@@ -146,18 +152,6 @@ function AddPatient(props) {
                 if (success) {
                     setPid(json.pid)
                     setOpen(true)
-                    setInfo( {age:'',
-                        ptgender:'',
-                        pteducat:'',
-                        ptethcat:'',
-                        ptraccat:'',
-                        ptmarry:'',
-                        apoe4:'',
-                        dx_bl:'',
-                        dx:'',
-                        examdate:'',})
-
-
                 } else {
                     alert('Problem occurred.');
                 }
@@ -165,7 +159,7 @@ function AddPatient(props) {
             .catch(err => {
                 alert('Some error has occurred')
                 console.log(err)
-            });
+            });}
 
 
     };
@@ -283,15 +277,29 @@ function AddPatient(props) {
                                             component="nav"
                                             className={classes.root}
                                         >
+                                            <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                      component={Link} to={{pathname: "/selectmodel", state: {id: props.location.state.id}}}>
+                                                <ListItemIcon>
+                                                    <SelectAllIcon/>
+                                                </ListItemIcon>
+                                                <ListItemText primary="Select Model"/>
+                                            </ListItem>
 
-                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
-                                                          component={Link}  to={{pathname: "/doctorpatients", state: {id: props.location.state.id}}}>
-                                                    <ListItemIcon>
-                                                        <ReorderIcon/>
-                                                    </ListItemIcon>
-                                                    <ListItemText primary="My Patients"/>
-                                                </ListItem>
-
+                                            <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                      component={Link} to={{pathname: "/doctorpatients", state: {id: props.location.state.id}}}>
+                                                <ListItemIcon>
+                                                    <ReorderIcon/>
+                                                </ListItemIcon>
+                                                <ListItemText primary="My Patients"/>
+                                            </ListItem>
+                                            <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                      component={Link}  to={{pathname: "/morestatistics", state: {id: props.location.state.id}}}
+                                            >
+                                                <ListItemIcon>
+                                                    <PieChartIcon/>
+                                                </ListItemIcon>
+                                                <ListItemText primary="More Statistics"/>
+                                            </ListItem>
                                             <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
                                                       component={Link} to={{pathname: "/patientadd", state: {id: props.location.state.id}}}
                                             >
@@ -301,12 +309,20 @@ function AddPatient(props) {
                                                 <ListItemText primary="Add Patient"/>
                                             </ListItem>
                                             <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
-                                                component={Link} to={{pathname: "/visitadd", state: {id: props.location.state.id}}}
+                                                      component={Link}  to={{pathname: "/visitadd", state: {id: props.location.state.id}}}
                                             >
                                                 <ListItemIcon>
-                                                    <PlaylistAddIcon/>
+                                                    <PlaylistAdd/>
                                                 </ListItemIcon>
-                                                <ListItemText primary="Add Visit"/>
+                                                <ListItemText primary="Add Visitation"/>
+                                            </ListItem>
+                                            <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                      component={Link}  to={{pathname: "/similarvisits", state: {id: props.location.state.id}}}
+                                            >
+                                                <ListItemIcon>
+                                                    <PersonSearchIcon/>
+                                                </ListItemIcon>
+                                                <ListItemText primary="Similar Visitations"/>
                                             </ListItem>
 
                                         </List>
@@ -468,7 +484,7 @@ function AddPatient(props) {
                                                             }}
                                                             variant="contained"
 
-                                                            onClick={(info.age===''||info.ptgender===''||info.pteducat===''||info.ptethcat===''||info.ptraccat===''||info.ptmarry===''||info.apoe4===''||info.dx_bl===''||info.dx===''||info.examdate==='')?()=>setOpen2(true):()=>handleOnClick()}
+                                                            onClick={handleOnClick}
                                                         >
                                                             ADD
                                                         </Button>

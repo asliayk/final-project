@@ -10,11 +10,11 @@ import ReorderIcon from '@material-ui/icons/Reorder';
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
-import LocalMallIcon from '@material-ui/icons/LocalMall';
+import PieChartIcon from '@mui/icons-material/PieChart';
 import ListIcon from '@material-ui/icons/List';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
 import HomeIcon from '@material-ui/icons/Home';
-import PaymentIcon from '@material-ui/icons/Payment';
+import SelectAllIcon from '@mui/icons-material/SelectAll';
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import Paper from "@material-ui/core/Paper";
 import Grid from "@material-ui/core/Grid";
@@ -148,8 +148,8 @@ function Profile(props) {
             }).then(res => res.json())
                 .then(json => {
 
-                    setName({first_name: json.doctor.Name,last_name: json.doctor.Surname,email: json.doctor.Mail})
-                 
+                    setName({first_name: json.doctor.Name,last_name: json.doctor.Surname,email: json.doctor.Mail,username:json.doctor.Name+"_"+json.doctor.Surname})
+
 
                 }).then(() => {
                 setLoadPage(true)
@@ -212,6 +212,13 @@ function Profile(props) {
                                                 component="nav"
                                                 className={classes.root}
                                             >
+                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                          component={Link} to={{pathname: "/selectmodel", state: {id: props.location.state.id}}}>
+                                                    <ListItemIcon>
+                                                        <SelectAllIcon/>
+                                                    </ListItemIcon>
+                                                    <ListItemText primary="Select Model"/>
+                                                </ListItem>
 
                                                 <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
                                                           component={Link} to={{pathname: "/doctorpatients", state: {id: props.location.state.id}}}>
@@ -220,7 +227,14 @@ function Profile(props) {
                                                     </ListItemIcon>
                                                     <ListItemText primary="My Patients"/>
                                                 </ListItem>
-
+                                                <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
+                                                          component={Link}  to={{pathname: "/morestatistics", state: {id: props.location.state.id}}}
+                                                >
+                                                    <ListItemIcon>
+                                                        <PieChartIcon/>
+                                                    </ListItemIcon>
+                                                    <ListItemText primary="More Statistics"/>
+                                                </ListItem>
                                                 <ListItem button style={{marginTop: '1rem', marginBottom: '1rem'}}
                                                           component={Link} to={{pathname: "/patientadd", state: {id: props.location.state.id}}}
                                                     >
@@ -278,15 +292,7 @@ function Profile(props) {
                                                     defaultValue={name.first_name}
                                                     disabled={!edit}
                                                     onChange={onChange}
-                                                    /*InputProps={{
-                                                      endAdornment: (
-                                                        <InputAdornment position="end">
-                                                          <IconButton onClick={() => setEdit(true)}>
-                                                            <EditIcon />
-                                                          </IconButton>
-                                                        </InputAdornment>
-                                                      )
-                                                    }}*/
+
                                                 />
                                             </Grid>
                                             <Grid item xs={10} sm={5}>
@@ -344,20 +350,13 @@ function Profile(props) {
 
                                             <Grid item xs={10}>
                                                 <TextField
-                                                    required
-
-                                                    id="address_1"
-                                                    name="address1"
-                                                    label="Address line 1"
                                                     fullWidth
+                                                    id="address"
+                                                    label="Address"
                                                     variant="outlined"
-                                                    autoComplete="shipping address-line1"
-                                                    disabled={!edit}
-
-                                                    defaultValue={''}
-
+                                                    defaultValue={" "}
+                                                    disabled={true}
                                                     onChange={onChange}
-
                                                 />
                                             </Grid>
 
@@ -379,7 +378,7 @@ function Profile(props) {
                                                                 backgroundColor: "#0B3954",
                                                             }}
                                                             variant="contained" color="primary"
-                                                            onClick={handleOnClick}
+                                                            //onClick={handleOnClick}
                                                         >
                                                             Save
                                                         </Button>

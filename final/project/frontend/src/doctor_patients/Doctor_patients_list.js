@@ -10,6 +10,7 @@ import { PieChart } from 'react-minimal-pie-chart';
 import Chip from '@mui/material/Chip';
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
+import TextField from "@material-ui/core/TextField";
 
 const useStyles = makeStyles((theme) => ({
 
@@ -108,10 +109,12 @@ export default function Doctor_patients_list(props) {
 
 
     const[datap,setDatap]= useState([]);
+    const[datainitialp,setDatainitialp]= useState([]);
     const[count,setCount]= useState(10);
     const[num,setNum]=useState(1)
     let lendivideten=1;
     const[plist,setPlist]= useState([]);
+    const[plistinitial,setPlistinitial]= useState([]);
     const[inpage,setinpage]= useState(false);
     const docid=props.location.state.id;
 
@@ -124,6 +127,7 @@ export default function Doctor_patients_list(props) {
             .then((response) => response.json())
             .then((data) => {
                 setDatap(data.patients)
+                setDatainitialp(data.patients)
                 lendivideten=Math.floor(data.patients.length/10)
                 if(!(data.patients.length%10==0)){
                     setCount(lendivideten+1)
@@ -131,6 +135,7 @@ export default function Doctor_patients_list(props) {
                     setCount(lendivideten)
                 }
                 setPlist(data.patients.slice(0,10))
+                setPlistinitial(data.patients.slice(0,10))
                 setNum(lendivideten)
             }).then(() => {
             fetch("http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/getStatistics", {
@@ -182,7 +187,29 @@ export default function Doctor_patients_list(props) {
 
 
     };
-
+    function onChange(event) {
+        if(event.target.value==""){
+        setDatap(datainitialp)
+        lendivideten=Math.floor(datainitialp.length/10)
+        if(!(datainitialp.length%10==0)){
+            setCount(lendivideten+1)
+        }else{
+            setCount(lendivideten)
+        }
+        setPlist(datainitialp.slice(0,10))
+        setNum(lendivideten)}else{
+            let temp=datainitialp.filter(d => d.PTID.includes(event.target.value))
+            setDatap(temp)
+            lendivideten=Math.floor(temp.length/10)
+            if(!(temp.length%10==0)){
+                setCount(lendivideten+1)
+            }else{
+                setCount(lendivideten)
+            }
+            setPlist(temp.slice(0,10))
+            setNum(lendivideten)
+        }
+    }
 
 
 
@@ -235,9 +262,10 @@ export default function Doctor_patients_list(props) {
                 <Grid container >
                     <Grid item xs={5}>
                <div style={{marginBottom: "1rem"}}>
+                <TextField  onChange={onChange} style={{marginLeft: "8rem",height:"3rem", width:"20rem"}} id="outlined-basic" label="Search" variant="standard" />
                 <List  className={classes.list}
                     width={window.screen.width*(0.45)}
-                    height={window.screen.height*(0.7)}
+                    height={window.screen.height*(0.61)}
                     itemCount={plist.length}
                     itemSize={120}
                 >

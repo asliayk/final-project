@@ -117,8 +117,7 @@ function Patient(props) {
 
     const [name, setName] = useState({
 
-        first_name: '',
-        last_name: '',
+        ptid: '',
         sex: '',
         age: '',
         maritalStatus: '',
@@ -168,7 +167,7 @@ function Patient(props) {
                     setlastdiagnosis(json.patient.DX)
                     //setlastdiagnosisscore(json.patient.LastScore)
 
-                    setName({first_name: json.patient.PTID,last_name: json.patient.PTID,sex: json.patient.PTGENDER,
+                    setName({ptid: json.patient.PTID,sex: json.patient.PTGENDER,
                         age: json.patient.AGE,maritalStatus: json.patient.PTMARRY, race: json.patient.PTRACCAT})
                  
 
@@ -211,7 +210,7 @@ function Patient(props) {
                                 pathname: '/patient',
                                 state: { id: id }
                             }} >
-                                Patient {name.first_name}
+                                Patient {name.ptid}
                             </Link>
                         </Breadcrumbs>
                     </div>
@@ -235,58 +234,55 @@ function Patient(props) {
                                     </div>
                                     <div style={{marginLeft: "3rem"}}>
                                         <Grid container spacing={3}>
-                                            <Grid item xs={10} sm={5}>
+                                            <Grid item xs={10}>
                                                 <TextField
+
+
+                                                    id="ptid"
+                                                    name="ptid"
+                                                    label="PTID"
                                                     fullWidth
-                                                    id="first_name"
-                                                    label="Name"
                                                     variant="outlined"
-                                                    defaultValue={name.first_name}
                                                     disabled={!edit}
+
+                                                    defaultValue={name.ptid}
+
                                                     onChange={onChange}
-                                                    /*InputProps={{
-                                                      endAdornment: (
-                                                        <InputAdornment position="end">
-                                                          <IconButton onClick={() => setEdit(true)}>
-                                                            <EditIcon />
-                                                          </IconButton>
-                                                        </InputAdornment>
-                                                      )
-                                                    }}*/
+
                                                 />
                                             </Grid>
-                                            <Grid item xs={10} sm={5}>
+                                            <Grid item xs={10}>
                                                 <TextField
-                                                    fullWidth
-                                                    id="last_name"
-                                                    label="Surname"
-                                                    variant="outlined"
-                                                    defaultValue={name.last_name}
-                                                    disabled={!edit}
-                                                    onChange={onChange}
-                                                />
-                                            </Grid>
-                                            <Grid item xs={10} sm={5}>
-                                                <TextField
-                                                    fullWidth
+
+
                                                     id="age"
+                                                    name="age"
                                                     label="Age"
+                                                    fullWidth
                                                     variant="outlined"
+                                                    disabled={!edit}
+
                                                     defaultValue={name.age}
 
-                                                    disabled={!edit}
                                                     onChange={onChange}
+
                                                 />
                                             </Grid>
-                                            <Grid item xs={10} sm={5}>
+                                            <Grid item xs={10}>
                                                 <TextField
-                                                    fullWidth
+
+
                                                     id="sex"
+                                                    name="sex"
                                                     label="Sex"
+                                                    fullWidth
                                                     variant="outlined"
+                                                    disabled={!edit}
+
                                                     defaultValue={name.sex}
-                                                    disabled={true}
+
                                                     onChange={onChange}
+
                                                 />
                                             </Grid>
                                       

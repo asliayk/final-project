@@ -1,6 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react';
 import {Link} from "react-router-dom";
-import { styled } from '@mui/material/styles';
 import AccountCircleOutlinedIcon from '@material-ui/icons/AccountCircleOutlined';
 import IconButton from "@material-ui/core/IconButton";
 import Badge from "@material-ui/core/Badge";
@@ -14,8 +13,8 @@ import ListItemText from "@material-ui/core/ListItemText";
 import LocalMallIcon from '@material-ui/icons/LocalMall';
 import ListIcon from '@material-ui/icons/List';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
+import HomeIcon from '@material-ui/icons/Home';
+import Stack from '@mui/material/Stack';
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import Paper from "@material-ui/core/Paper";
 import Grid from "@material-ui/core/Grid";
@@ -27,13 +26,13 @@ import Button from "@material-ui/core/Button";
 import LockIcon from '@material-ui/icons/Lock';
 import AddCircleIcon from '@material-ui/icons/AddCircle';
 import Tooltip from "@material-ui/core/Tooltip";
-import FileRead from "../components/fileread";
-import ScrollList from "../components/scrolllist";
-import SendIcon from '@mui/icons-material/Send';
 import {PlaylistAdd} from "@material-ui/icons";
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import Alert from "@mui/material/Alert";
+import Snackbar from "@mui/material/Snackbar";
 import SelectAllIcon from "@mui/icons-material/SelectAll";
 import PieChartIcon from "@mui/icons-material/PieChart";
-import PersonSearchIcon from "@mui/icons-material/PersonSearch";
+
 
 
 const useStyles = makeStyles((theme) => ({
@@ -51,12 +50,12 @@ const useStyles = makeStyles((theme) => ({
     },
     paper: {
 
-        height: "44rem",
+        height: "35rem",
         padding: theme.spacing(2),
         color: theme.palette.text.secondary,
     },
     paper2: {
-        height: "44rem",
+        height: "35rem",
 
         padding: theme.spacing(2),
         color: theme.palette.text.secondary,
@@ -86,14 +85,16 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-function AddVisit(props) {
+function SelectModel(props) {
     let [loadPage, setLoadPage] = React.useState(false);
     const classes = useStyles();
     let [open, setOpen] = React.useState(false);
-    let [open2, setOpen2] = React.useState(false);
-    let [add, setAdd] = React.useState(true);
-    let [pid, setPid] = React.useState('');
-    let [prognosis, setprognosis] = React.useState([]);
+    let [edit, setEdit] = React.useState(false);
+    let [modelid, setModelid] = React.useState("");
+    let [model2, setModel2] = React.useState(false);
+    let [model3, setModel3] = React.useState(false);
+    let [model4, setModel4] = React.useState(false);
+    let [model8, setModel8] = React.useState("");
 
     const  id=props.location.state.id;
 
@@ -102,53 +103,9 @@ function AddVisit(props) {
     let history = useHistory();
 
 
-    const handleClose = (event, reason) => {
-        if (reason === 'clickaway') {
-            return;
-        }
-
-        setOpen(false);
-        setOpen2(false)
-    };
 
 
-
-
-    const [info, setInfo] = useState({
-        age:'',
-        ptgender:'',
-        pteducat:'',
-        ptethcat:'',
-        ptraccat:'',
-        ptmarry:'',
-        apoe4:'',
-        dx_bl:'',
-        dx:'',
-        examdate:'',
-        id:''
-
-
-    });
-    const handleOnClick = () => {
-        fetch( 'http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/patientProfile/'+info.id+'/'
-            , {
-                method: 'GET',
-                headers: {'Content-Type': 'application/json'}
-            }).then(res => res.json())
-            .then(json => {
-                //console.log(json)
-                setprognosis(json.visits)
-
-
-            }).then(() => {
-            setLoadPage(true)
-        }).then(json => {
-        })
-            .catch(err => console.log(err));
-    };
-
-
-    let [name, setName] = useState({
+    const [name, setName] = useState({
 
         first_name: '',
         last_name: '',
@@ -157,29 +114,77 @@ function AddVisit(props) {
     });
 
 
+    const handleClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
 
-    function onChange(event) {
-        let mutableState = info
-        mutableState[event.target.id] = event.target.value
-        setInfo(mutableState)
-        console.log(info)
-    }
+        setOpen(false);
 
+    };
+    const handleOnClick = (classnum) => {
+        console.log(classnum)
+        const url = "http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/selectModel";
+        const data = {
+
+            ID: '1',
+            ClassNum:classnum
+
+        }
+
+            fetch(url, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            }).then(res => res.json())
+                .then(json => {
+                    const success = json.status.success
+                    if (success) {
+                        setOpen(true)
+                        setModelid(classnum)
+                        if(classnum=="2"){
+                            setModel2(true)
+                            setModel3(false)
+                            setModel4(false)
+                            setModel8(false)
+                        }else if(classnum=="3"){
+                            setModel3(true)
+                            setModel2(false)
+                            setModel4(false)
+                            setModel8(false)
+                        }else if(classnum=="4"){
+                            setModel4(true)
+                            setModel2(false)
+                            setModel3(false)
+                            setModel8(false)
+                        }else if(classnum=="8"){
+                            setModel8(true)
+                            setModel2(false)
+                            setModel3(false)
+                            setModel4(false)
+                        }
+                    } else {
+                        alert('Problem occurred.');
+                    }
+                })
+                .catch(err => {
+                    alert('Some error has occurred')
+                    console.log(err)
+                });
+
+
+    };
 
     useEffect(() => {
         const docid=props.location.state.id
-
         fetch( 'http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/doctorProfile/'+docid+'/'
             , {
                 method: 'GET',
                 headers: {'Content-Type': 'application/json'}
             }).then(res => res.json())
             .then(json => {
-                console.log(json.doctor.Name)
 
-                setName({first_name: json.doctor.Name,last_name: json.doctor.Surname})
-
-
+                setName({first_name: json.doctor.Name,last_name: json.doctor.Surname,email: json.doctor.Mail})
 
 
             }).then(() => {
@@ -188,33 +193,52 @@ function AddVisit(props) {
         })
             .catch(err => console.log(err));
 
+        fetch( 'http://tdjango.eba-nfssu9sz.us-west-2.elasticbeanstalk.com/api/getModel'
+            , {
+                method: 'GET',
+                headers: {'Content-Type': 'application/json'}
+            }).then(res => res.json())
+            .then(json => {
+
+         if(json.model=="2"){
+             setModel2(true)
+         }else if(json.model=="3"){
+             setModel3(true)
+         }else if(json.model=="4"){
+             setModel4(true)
+         }else if(json.model=="8"){
+             setModel8(true)
+         }
+
+
+            }).then(() => {
+           // setLoadPage(true)
+        }).then(json => {
+        })
+            .catch(err => console.log(err));
+
     }, []);
+
+
+
     return (
 
         <div>
             {loadPage ? (
-
                 <div>
-                    <Snackbar open={open} autoHideDuration={6000} onClose={handleClose} anchorOrigin={{
-                        vertical: "top",
-                        horizontal: "center"
-                    }}>
-                        <Alert onClose={handleClose} severity="success" sx={{ width: '100%' }} >
-                            Patient number {pid} successfully added.
-                        </Alert>
-                    </Snackbar>
-                    <Snackbar open={open2} autoHideDuration={6000} onClose={handleClose} anchorOrigin={{
-                        vertical: "top",
-                        horizontal: "center"
-                    }}>
-                        <Alert onClose={handleClose} severity="error" sx={{ width: '100%' }}   >
-                            Please fill every necessary information.
-                        </Alert>
-                    </Snackbar>
                     <div className="Home">
+                        <Snackbar open={open} autoHideDuration={6000} onClose={handleClose} anchorOrigin={{
+                            vertical: "top",
+                            horizontal: "center"
+                        }}>
+                            <Alert onClose={handleClose} severity="success" sx={{ width: '100%' }} >
+                                Model is successfully set to {modelid} .
+                            </Alert>
+                        </Snackbar>
+                    </div>
+                    <div>
 
                     </div>
-
                     <div style={{marginTop: "1rem"}}>
                         <Breadcrumbs style={{color: "#0B3954"}} separator="›">
                             <Link style={{marginLeft: "3rem", color: "#0B3954"}}to={{
@@ -224,13 +248,12 @@ function AddVisit(props) {
                                 My Account
                             </Link>
                             <Link style={{color: "#0B3954"}}to={{
-                                pathname: '/visitadd',
+                                pathname: '/selectmodel',
                                 state: { id: id }
                             }}>
-                                Add Visitation
+                                Select Model
                             </Link>
                         </Breadcrumbs>
-
                     </div>
 
                     <div className={classes.gridroot}>
@@ -324,83 +347,45 @@ function AddVisit(props) {
                                                 color: "black",
                                                 fontSize: 30,
                                                 fontWeight: "500",
-                                                marginLeft: "12rem",
-                                                marginBottom: "2rem"
+                                                marginLeft: "12rem"
                                             }}
-                                            defaultValue="Add Visitation"
+                                            defaultValue="Model Terms"
                                             disabled={true}
                                         />
                                     </div>
-                                    <div style={{marginLeft: "6rem"}}>
-                                        <Grid container spacing={3}>
-                                            <Grid item xs={10} sm={6}>
+                                    <div style={{marginLeft: "2rem",width:"57rem"}}>
+
+                                            <Grid item xs={10}>
                                                 <TextField
-                                                    fullWidth
-                                                    id="id"
-                                                    label="Enter the Patient ID"
+                                                    required
+                                                    style={{width:"48rem"}}
+                                                    id="outlined-multiline-flexible"
+                                                    label="Explanation"
+                                                    multiline
+                                                    maxRows={20}
                                                     variant="outlined"
-                                                    defaultValue={info.id}
-                                                    disabled={!add}
-                                                    onChange={onChange}
+                                                    autoComplete="shipping address-line1"
+                                                    disabled={!edit}
+
+                                                    defaultValue={'bfsdjgbckbjffndnvzxnfLNLk' +
+                                                    'jgjhgkkgkjhkjklj;ll;;;jl;jl;jkhkjjjlgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg'
+                                                    }
+
+
 
                                                 />
-                                            </Grid>
-                                            <Grid item xs={10} sm={4}>
-                                            <Button variant="contained" onClick={handleOnClick}   style={{
-                                                backgroundColor: "green",
-                                                color:'white',
-                                                fontSize: 22,
-                                                fontWeight: "500",
-                                            }}  endIcon={<SendIcon />}>
-                                                List Visits
-                                            </Button>
-                                                </Grid>
-                                            <Grid item xs={10}>
-                                                <Paper >
-                                                    <div>
-                                                        <InputBase
-                                                            style={{
-                                                                color: "black",
-                                                                fontSize: 30,
-                                                                fontWeight: "500",
-
-                                                            }}
-                                                            defaultValue="Upload Visitation Results"
-
-                                                        />
-                                                    </div>
-                                                    <FileRead id={info.id}/>
-                                                    <div style={{marginTop: '1rem'}}>
-
-
-
-                                                    </div>
-
-                                                </Paper></Grid>
-                                            <Grid item xs={10}>
-                                            <Paper >
-                                                <div>
-                                                    <InputBase
-                                                        style={{
-                                                            color: "black",
-                                                            fontSize: 30,
-                                                            fontWeight: "500",
-
-                                                        }}
-                                                        defaultValue="Visitations"
-
-                                                    />
-                                                </div>
-                                                <ScrollList listof={prognosis} />
-                                            </Paper></Grid>
-
-
-
 
 
                                         </Grid>
 
-
+                                        <div style={{marginTop: '2rem'}}>
+                                            <Stack direction="row" spacing={2}>
+                                                {model2?<Button  style={{fontSize:"2rem",background:"green",color:"white",height:"11rem",width:"11rem",borderRadius: '5em'}} onClick={()=>handleOnClick('2')}>Select Model 2</Button>:<Button  style={{fontSize:"2rem",background:"#B0E0E6",color:"white",height:"11rem",width:"11rem",borderRadius: '5em'}} onClick={()=>handleOnClick('2')}>Select Model 2</Button>}
+                                                {model3?<Button  style={{fontSize:"2rem",background:"green",color:"white",height:"11rem",width:"11rem",borderRadius: '5em'}} onClick={()=>handleOnClick('3')}>Select Model 3</Button>:<Button  style={{fontSize:"2rem",background:"#98d8d5",color:"white",height:"11rem",width:"11rem",borderRadius: '5em'}} onClick={()=>handleOnClick('3')}>Select Model 3</Button>}
+                                                {model4?<Button style={{fontSize:"2rem",background:"green",color:"white",height:"11rem",width:"11rem",borderRadius: '5em'}} onClick={()=>handleOnClick('4')}>Select Model 4</Button>:<Button style={{fontSize:"2rem",background:"#97bec4",color:"white",height:"11rem",width:"11rem",borderRadius: '5em'}} onClick={()=>handleOnClick('4')}>Select Model 4</Button>}
+                                                {model8?<Button  style={{fontSize:"2rem",background:"green",color:"white",height:"11rem",width:"11rem",borderRadius: '5em'}} onClick={()=>handleOnClick('8')}>Select Model 8</Button>:<Button  style={{fontSize:"2rem",background:"#58babf",color:"white",height:"11rem",width:"11rem",borderRadius: '5em'}} onClick={()=>handleOnClick('8')}>Select Model 8</Button>}
+                                            </Stack>
+                                        </div>
                                     </div>
                                 </Paper>
                             </Grid>
@@ -414,4 +399,4 @@ function AddVisit(props) {
     );
 }
 
-export default AddVisit;
+export default SelectModel;
