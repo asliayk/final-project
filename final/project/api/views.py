@@ -47,17 +47,6 @@ def timestamped_name(num):
     img_name = timestamp + postfix
     return img_name
 
-# def modeldata_to_float(df):
-
-#     feature_list = ['AGE','ADAS11','ADAS11_bl','ADAS13','ADAS13_bl','CDRSB','CDRSB_bl','Entorhinal',
-#     'Entorhinal_bl','FAQ','FAQ_bl','FDG','FDG_bl','Fusiform','Fusiform_bl','Hippocampus','Hippocampus_bl',
-#     'ICV','ICV_bl','MMSE','MMSE_bl','MidTemp','MidTemp_bl','RAVLT_immediate','RAVLT_learning','RAVLT_forgetting',
-#     'RAVLT_perc_forgetting','RAVLT_immediate_bl','MMSE_bl','Ventricles','Ventricles_bl','WholeBrain','WholeBrain_bl']
-
-#     for feature in feature_list:
-#         df[feature] = pd.to_numeric(df[feature], downcast="float")
-    
-#     return df
 
 def get_onehot_columns(df, cat_col_list):
     for i in cat_col_list:
@@ -129,7 +118,6 @@ def data_preprocessing(data, columns, features_list, selected_months, is_2d, int
   
     cat_column_list = sorted([col for col in df.select_dtypes(include=['category', 'object']).columns if
                               col not in [id_column, date_column, label_column]])
-    #--num_column_list = ['ADAS11', 'ADAS11_bl', 'ADAS13', 'ADAS13_bl', 'AGE', 'APOE4', 'CDRSB', 'CDRSB_bl', 'Entorhinal', 'Entorhinal_bl', 'FAQ', 'FAQ_bl', 'FDG', 'FDG_bl', 'Fusiform', 'Fusiform_bl', 'Hippocampus', 'Hippocampus_bl', 'ICV', 'ICV_bl', 'MMSE', 'MMSE_bl', 'MidTemp', 'MidTemp_bl', 'RAVLT_immediate', 'RAVLT_immediate_bl', 'Ventricles', 'Ventricles_bl', 'WholeBrain', 'WholeBrain_bl']
   
     
     df = get_onehot_columns(df, cat_column_list)
@@ -471,6 +459,12 @@ def getDoctors(request):
         return JsonResponse({"status": {"success": True, "message": "Successfully fetched"},"doctors": doctor_serializer.data},status=200) 
 
 @csrf_exempt
+def getModel(request):
+    if request.method == 'GET':
+        selected_model = SelectedModel.objects.first().ClassNum
+        return JsonResponse({"status": {"success": True, "message": "Successfully fetched"},"model": selected_model},status=200)         
+
+@csrf_exempt
 def getPatients(request):
     if request.method == 'GET':
         patients = Patient.objects.all()
@@ -620,10 +614,11 @@ def getPatientProfile(request,id):
         'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]    
 
         selected_model = SelectedModel.objects.first().ClassNum
-     
+        features_bl = []
         if selected_model=="8":
-            model_path='api/deneme_model_fwobl_8_2048.pth'
+            model_path='api/deneme_model_lastt_8.pth'
             s_labels = ["Dementia","Dementia to MCI","MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"]
+            features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
         elif selected_model=="2":
             model_path='api/deneme_model_upf_2.pth'
             s_labels = ["Dementia","MCI"]
@@ -656,10 +651,9 @@ def getPatientProfile(request,id):
         selected_months = [0, 6, 12, 18, 24]
         
        
-        #features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
+       
 
-        #features_list = sorted(features + features_bl)
-        features_list = sorted(features)
+        features_list = sorted(features + features_bl)
        
         cols = [id_column, date_column] + features_list
         data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=False)
@@ -718,9 +712,11 @@ def getSimilarVisits(request):
         'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]    
 
         selected_model = SelectedModel.objects.first().ClassNum
+        features_bl = []
         if selected_model=="8":
-            model_path='api/deneme_model_fwobl_8_2048.pth'
+            model_path='api/deneme_model_lastt_8.pth'
             s_labels = ["Dementia","Dementia to MCI","MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"]
+            features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
         elif selected_model=="2":
             model_path='api/deneme_model_upf_2.pth'
             s_labels = ["Dementia","MCI"]
@@ -734,14 +730,9 @@ def getSimilarVisits(request):
         if selected_model!="8":
             features = ['AGE', 'APOE4', 'CDRSB', 'ADAS11', 'ADAS13', 'MMSE', 'RAVLT_immediate', 'RAVLT_learning', 'RAVLT_forgetting', 'RAVLT_perc_forgetting', 'FAQ', 'Ventricles', 'Hippocampus',
             'WholeBrain', 'Entorhinal', 'Fusiform', 'MidTemp', 'ICV']
+   
 
-        #df = modeldata_to_float(df)
-      
-
-        #features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
-
-        #features_list = sorted(features + features_bl)
-        features_list = sorted(features)
+        features_list = sorted(features + features_bl)
         cols = [id_column, date_column] + features_list
         data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=True)
         values = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=s_labels, isSimilar=True)
@@ -827,10 +818,12 @@ def getTSNE(request):
         'Fusiform','ICV',
         'APOE4','Ventricles',"FAQ", "CDRSB","AGE"]    
 
+        features_bl = []
         selected_model = SelectedModel.objects.first().ClassNum
         if selected_model=="8":
-            model_path='api/deneme_model_fwobl_8_2048.pth'
+            model_path='api/deneme_model_lastt_8.pth'
             s_labels = ["Dementia","Dementia to MCI","MCI","MCI to Dementia","MCI to NL","NL","NL to Dementia","NL to MCI"]
+            features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
         elif selected_model=="2":
             model_path='api/deneme_model_upf_2.pth'
             s_labels = ["Dementia","MCI"]
@@ -846,13 +839,7 @@ def getTSNE(request):
             'WholeBrain', 'Entorhinal', 'Fusiform', 'MidTemp', 'ICV']
 
 
-        #df = modeldata_to_float(df)
-        df["FDG"] = df.FDG.astype(float)
-
-        #features_bl = [x + "_bl" for x in features if x not in ['APOE4','M','AGE']]
-
-        #features_list = sorted(features + features_bl)
-        features_list = sorted(features)
+        features_list = sorted(features + features_bl)
         cols = [id_column, date_column] + features_list
         data_2d, num_column_list, cat_column_list = data_preprocessing(dc(df), (id_column, date_column, label_column), cols, selected_months, is_2d=True, interpolation=False)
         values = prepare_model_data_2d(data_2d, 0.2, pad_value, num_column_list, selected_labels=s_labels,isTSNE=True)
