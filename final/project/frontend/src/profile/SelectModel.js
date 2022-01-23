@@ -367,9 +367,7 @@ function SelectModel(props) {
                                                     autoComplete="shipping address-line1"
                                                     disabled={!edit}
 
-                                                    defaultValue={'bfsdjgbckbjffndnvzxnfLNLk' +
-                                                    'jgjhgkkgkjhkjklj;ll;;;jl;jl;jkhkjjjlgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg'
-                                                    }
+                                                    defaultValue={'You can select one of these 4 different classifier models. Model 2 classifies patients as MCI or Dementia. Model 3 classifies patients as MCI, Normal, or Dementia. Model 4 classifies patients as MCI to Dementia, Normal, Dementia, or Normal to MCI. Model 8 classifies patients as MCI, Normal, Dementia, MCI to Dementia, MCI to Normal, Normal to MCI, Dementia to MCI, or Normal to Dementia. All these models are trained with 12.000+ visitations and 1.500+ patients. ' }
 
 
 
